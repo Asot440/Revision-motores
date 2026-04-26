@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Motor Monitoring System</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="dashboard-page">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo-mini">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="9"/>
+                    <path d="M12 6 L12 12 L16 12"/>
+                </svg>
+                <span>Motor Monitoring</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn-icon" id="notificationsBtn" title="Notificaciones">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+                    </svg>
+                </button>
+                <div class="user-menu">
+                    <button class="btn-user" id="userMenuBtn">
+                        <span class="user-avatar">AR</span>
+                        <span class="user-name">Admin</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                    </button>
+                    <div class="dropdown-menu" id="userDropdown">
+                        <a href="#" class="dropdown-item">Mi Perfil</a>
+                        <a href="#" class="dropdown-item">Configuración</a>
+                        <hr>
+                        <a href="#" class="dropdown-item logout" id="logoutBtn">Cerrar Sesión</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <nav class="nav-menu">
+                <div class="nav-item active" data-page="home">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    <span>Inicio</span>
+                </div>
+
+                <div class="nav-divider">Monitoreo</div>
+
+                <div class="nav-item" data-page="critical">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                        <polyline points="2 12 12 17 22 12"></polyline>
+                        <polyline points="2 17 12 22 22 17"></polyline>
+                    </svg>
+                    <span>Revisión de Equipo Crítico</span>
+                </div>
+
+                <div class="nav-item" data-page="general">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="3" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="3" width="7" height="7"></rect>
+                        <rect x="14" y="14" width="7" height="7"></rect>
+                        <rect x="3" y="14" width="7" height="7"></rect>
+                    </svg>
+                    <span>Revisión de Equipo General</span>
+                </div>
+
+                <div class="nav-divider">Otros</div>
+
+                <div class="nav-item" data-page="reports">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    <span>Reportes</span>
+                </div>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Page: Home -->
+            <div class="page active" id="home-page">
+                <div class="page-header">
+                    <h1>Bienvenido al Sistema de Monitoreo</h1>
+                    <p>Controla y monitorea tus motores eléctricos en tiempo real</p>
+                </div>
+
+                <div class="cards-grid">
+                    <div class="card card-clickable" data-action="critical">
+                        <div class="card-icon critical">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M12 2L22 20H2Z"></path>
+                                <path d="M12 9v4"></path>
+                                <path d="M12 17h.01"></path>
+                            </svg>
+                        </div>
+                        <h3>Revisión de Equipo Crítico</h3>
+                        <p>Monitorea equipos críticos con temperatura y corriente en tiempo real</p>
+                        <div class="card-footer">
+                            <span class="badge badge-critical">5 Activos</span>
+                            <span class="arrow">→</span>
+                        </div>
+                    </div>
+
+                    <div class="card card-clickable" data-action="general">
+                        <div class="card-icon general">
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+                                <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+                            </svg>
+                        </div>
+                        <h3>Revisión de Equipo General</h3>
+                        <p>Supervisa todos los equipos del sistema y seu estado general</p>
+                        <div class="card-footer">
+                            <span class="badge badge-general">12 Activos</span>
+                            <span class="arrow">→</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value">17</div>
+                        <div class="stat-label">Equipos en Línea</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">2</div>
+                        <div class="stat-label">Alertas Activas</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">99.8%</div>
+                        <div class="stat-label">Disponibilidad</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">45°C</div>
+                        <div class="stat-label">Temp. Promedio</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Critical -->
+            <div class="page" id="critical-page">
+                <div class="page-header">
+                    <h1>Revisión de Equipo Crítico</h1>
+                    <p>Monitoreo de equipos críticos con alertas en tiempo real</p>
+                </div>
+
+                <div class="filters">
+                    <input type="text" placeholder="Buscar equipos..." class="search-input">
+                    <select class="filter-select">
+                        <option>Todos los Estados</option>
+                        <option>En Línea</option>
+                        <option>Alerta</option>
+                        <option>Offline</option>
+                    </select>
+                </div>
+
+                <div class="equipment-list">
+                    <div class="equipment-card">
+                        <div class="equipment-header">
+                            <h3>Motor Principal - Línea A</h3>
+                            <span class="status status-online">En Línea</span>
+                        </div>
+                        <div class="equipment-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Temperatura</span>
+                                <span class="metric-value">48°C</span>
+                                <div class="metric-bar">
+                                    <div class="metric-fill" style="width: 48%"></div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Corriente</span>
+                                <span class="metric-value">32.5 A</span>
+                                <div class="metric-bar">
+                                    <div class="metric-fill" style="width: 65%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="equipment-card">
+                        <div class="equipment-header">
+                            <h3>Motor de Bomba - Línea B</h3>
+                            <span class="status status-alert">Alerta</span>
+                        </div>
+                        <div class="equipment-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Temperatura</span>
+                                <span class="metric-value">72°C</span>
+                                <div class="metric-bar metric-alert">
+                                    <div class="metric-fill" style="width: 72%"></div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Corriente</span>
+                                <span class="metric-value">38.2 A</span>
+                                <div class="metric-bar">
+                                    <div class="metric-fill" style="width: 76%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="equipment-card">
+                        <div class="equipment-header">
+                            <h3>Motor de Ventilación - Línea C</h3>
+                            <span class="status status-online">En Línea</span>
+                        </div>
+                        <div class="equipment-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Temperatura</span>
+                                <span class="metric-value">42°C</span>
+                                <div class="metric-bar">
+                                    <div class="metric-fill" style="width: 42%"></div>
+                                </div>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Corriente</span>
+                                <span class="metric-value">28.1 A</span>
+                                <div class="metric-bar">
+                                    <div class="metric-fill" style="width: 56%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: General -->
+            <div class="page" id="general-page">
+                <div class="page-header">
+                    <h1>Revisión de Equipo General</h1>
+                    <p>Supervisión general de todos los equipos del sistema</p>
+                </div>
+
+                <div class="filters">
+                    <input type="text" placeholder="Buscar equipos..." class="search-input">
+                    <select class="filter-select">
+                        <option>Todos los Estados</option>
+                        <option>En Línea</option>
+                        <option>Alerta</option>
+                        <option>Offline</option>
+                    </select>
+                </div>
+
+                <div class="equipment-grid">
+                    <div class="equipment-card-compact">
+                        <div class="card-title">Motor General 1</div>
+                        <div class="card-status status-online">En Línea</div>
+                        <div class="card-metric">
+                            <span>Temp: 35°C</span>
+                            <span>Corriente: 24.5 A</span>
+                        </div>
+                    </div>
+
+                    <div class="equipment-card-compact">
+                        <div class="card-title">Motor General 2</div>
+                        <div class="card-status status-online">En Línea</div>
+                        <div class="card-metric">
+                            <span>Temp: 40°C</span>
+                            <span>Corriente: 29.3 A</span>
+                        </div>
+                    </div>
+
+                    <div class="equipment-card-compact">
+                        <div class="card-title">Motor General 3</div>
+                        <div class="card-status status-offline">Offline</div>
+                        <div class="card-metric">
+                            <span>Temp: --</span>
+                            <span>Corriente: --</span>
+                        </div>
+                    </div>
+
+                    <div class="equipment-card-compact">
+                        <div class="card-title">Motor General 4</div>
+                        <div class="card-status status-online">En Línea</div>
+                        <div class="card-metric">
+                            <span>Temp: 38°C</span>
+                            <span>Corriente: 27.8 A</span>
+                        </div>
+                    </div>
+
+                    <div class="equipment-card-compact">
+                        <div class="card-title">Motor General 5</div>
+                        <div class="card-status status-online">En Línea</div>
+                        <div class="card-metric">
+                            <span>Temp: 44°C</span>
+                            <span>Corriente: 31.2 A</span>
+                        </div>
+                    </div>
+
+                    <div class="equipment-card-compact">
+                        <div class="card-title">Motor General 6</div>
+                        <div class="card-status status-alert">Alerta</div>
+                        <div class="card-metric">
+                            <span>Temp: 65°C</span>
+                            <span>Corriente: 35.7 A</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Page: Reports -->
+            <div class="page" id="reports-page">
+                <div class="page-header">
+                    <h1>Reportes</h1>
+                    <p>Genera y visualiza reportes de tu sistema de monitoreo</p>
+                </div>
+                <div class="content-placeholder">
+                    <p>Sección de reportes (próximamente)</p>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

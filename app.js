@@ -1,11 +1,23 @@
-const http = require('http');
+const express = require('express');
+const path = require('path');
 
-const server = http.createServer((req, res) => {
-    res.statusCode = 200;
-    res.setHeader('Content-Type', 'text/plain');
-    res.end('Hello, World!\n');
+const app = express();
+
+// Middleware
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+
+// Rutas API (ejemplo)
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', message: 'Servidor funcionando correctamente' });
 });
 
-server.listen(3000, '127.0.0.1', () => {
-    console.log('Servidor corriendo en http://127.0.0.1:3000/');
+// Ruta principal
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
+
+const PORT = 3000;
+app.listen(PORT, '127.0.0.1', () => {
+    console.log(`Servidor corriendo en http://127.0.0.1:${PORT}/`);
 });
