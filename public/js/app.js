@@ -1,342 +1,459 @@
-// ============================================
-// LÓGICA DE LA PÁGINA DE LOGIN
-// ============================================
-document.addEventListener('DOMContentLoaded', function() {
-    // Detectar si estamos en la página de login o dashboard
-    const loginForm = document.getElementById('loginForm');
-    
-    if (loginForm) {
-        initializeLoginPage();
-    } else {
-        initializeDashboard();
-    }
-});
-
-// ============================================
-// FUNCIONES PARA LOGIN
-// ============================================
-function initializeLoginPage() {
-    const loginForm = document.getElementById('loginForm');
-
-    loginForm.addEventListener('submit', function(e) {
-        e.preventDefault();
-
-        const username = document.getElementById('username').value;
-        const password = document.getElementById('password').value;
-
-        // Validar que los campos no estén vacíos
-        if (!username || !password) {
-            showAlert('Por favor completa todos los campos', 'error');
-            return;
-        }
-
-        // Simulación de login (en producción, enviar a servidor)
-        console.log('Login attempt:', { username, password });
-        
-        // Guardar sesión simulada
-        localStorage.setItem('user', JSON.stringify({ 
-            username, 
-            loginTime: new Date().toISOString() 
-        }));
-
-        // Mostrar mensaje de éxito
-        showAlert('¡Bienvenido! Redirigiendo...', 'success');
-
-        // Redirigir al dashboard después de 1 segundo
-        setTimeout(() => {
-            window.location.href = '/dashboard.html';
-        }, 1000);
-    });
-
-    // Agregar efecto visual en inputs
-    const inputs = document.querySelectorAll('.login-form input');
-    inputs.forEach(input => {
-        input.addEventListener('focus', function() {
-            this.parentElement.style.transform = 'translateY(-2px)';
-        });
-
-        input.addEventListener('blur', function() {
-            this.parentElement.style.transform = 'translateY(0)';
-        });
-    });
-}
-
-// ============================================
-// FUNCIONES PARA DASHBOARD
-// ============================================
-function initializeDashboard() {
-    // Verificar si el usuario está autenticado
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (!user) {
-        window.location.href = '/index.html';
-        return;
-    }
-
-    // Inicializar menú de navegación
-    initializeNavigation();
-
-    // Inicializar menú de usuario
-    initializeUserMenu();
-
-    // Inicializar tarjetas clickeables
-    initializeClickableCards();
-
-    // Inicializar datos simulados
-    initializeSimulatedData();
-}
-
-function initializeNavigation() {
-    const navItems = document.querySelectorAll('.nav-item[data-page]');
-    const pages = document.querySelectorAll('.page');
-
-    navItems.forEach(item => {
-        item.addEventListener('click', function() {
-            const pageId = this.getAttribute('data-page');
-            
-            // Remover clase active de todos los items
-            navItems.forEach(i => i.classList.remove('active'));
-            
-            // Remover clase active de todas las páginas
-            pages.forEach(p => p.classList.remove('active'));
-
-            // Agregar clase active al item clickeado
-            this.classList.add('active');
-
-            // Mostrar la página correspondiente
-            const pageElement = document.getElementById(`${pageId}-page`);
-            if (pageElement) {
-                pageElement.classList.add('active');
-            }
-
-            // Guardar última página visitada
-            localStorage.setItem('lastPage', pageId);
-        });
-    });
-
-    // Cargar la última página visitada
-    const lastPage = localStorage.getItem('lastPage') || 'home';
-    const lastPageItem = document.querySelector(`.nav-item[data-page="${lastPage}"]`);
-    if (lastPageItem) {
-        lastPageItem.click();
-    }
-}
-
-function initializeUserMenu() {
-    const userMenuBtn = document.getElementById('userMenuBtn');
-    const userDropdown = document.getElementById('userDropdown');
-    const logoutBtn = document.getElementById('logoutBtn');
-
-    // Toggle dropdown
-    userMenuBtn.addEventListener('click', function(e) {
-        e.stopPropagation();
-        userDropdown.classList.toggle('active');
-    });
-
-    // Cerrar dropdown al hacer click afuera
-    document.addEventListener('click', function(e) {
-        if (!userMenuBtn.contains(e.target) && !userDropdown.contains(e.target)) {
-            userDropdown.classList.remove('active');
-        }
-    });
-
-    // Cerrar sesión
-    logoutBtn.addEventListener('click', function(e) {
-        e.preventDefault();
-        
-        // Limpiar localStorage
-        localStorage.removeItem('user');
-        localStorage.removeItem('lastPage');
-
-        // Redirigir a login
-        window.location.href = '/index.html';
-    });
-
-    // Actualizar nombre de usuario
-    const user = JSON.parse(localStorage.getItem('user'));
-    if (user) {
-        const userNameElement = document.querySelector('.user-name');
-        if (userNameElement) {
-            userNameElement.textContent = user.username.charAt(0).toUpperCase() + user.username.slice(1);
-        }
-
-        // Actualizar avatar con iniciales
-        const userAvatar = document.querySelector('.user-avatar');
-        if (userAvatar) {
-            const initials = user.username.substring(0, 2).toUpperCase();
-            userAvatar.textContent = initials;
-        }
-    }
-}
-
-function initializeClickableCards() {
-    const clickableCards = document.querySelectorAll('.card-clickable');
-
-    clickableCards.forEach(card => {
-        card.addEventListener('click', function() {
-            const action = this.getAttribute('data-action');
-            const navItem = document.querySelector(`.nav-item[data-page="${action}"]`);
-            
-            if (navItem) {
-                navItem.click();
-            }
-        });
-    });
-}
-
-function initializeSimulatedData() {
-    // Simular actualización de datos en tiempo real
-    setInterval(updateSimulatedMetrics, 3000);
-}
-
-function updateSimulatedMetrics() {
-    // Actualizar métricas de equipos críticos
-    const metrics = document.querySelectorAll('.metric-fill');
-
-    metrics.forEach(metric => {
-        // Generar variación pequeña en los valores
-        const currentWidth = parseFloat(metric.style.width);
-        const variation = (Math.random() - 0.5) * 10;
-        const newWidth = Math.max(0, Math.min(100, currentWidth + variation));
-        
-        metric.style.width = newWidth + '%';
-    });
-
-    // Ocasionalmente cambiar estado de algunos equipos (simulación)
-    if (Math.random() > 0.95) {
-        const statuses = document.querySelectorAll('.status');
-        if (statuses.length > 0) {
-            const randomStatus = statuses[Math.floor(Math.random() * statuses.length)];
-            // Cambio visual sin afectar permanentemente
-        }
-    }
-}
-
-// ============================================
-// FUNCIONES AUXILIARES
-// ============================================
-function showAlert(message, type = 'info') {
-    // Crear elemento de alerta
-    const alert = document.createElement('div');
-    alert.className = `alert alert-${type}`;
-    alert.textContent = message;
-    alert.style.cssText = `
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        padding: 15px 20px;
-        border-radius: 8px;
-        font-weight: 500;
-        z-index: 2000;
-        animation: slideIn 0.3s ease-out;
-    `;
-
-    // Aplicar estilos según el tipo
-    const colors = {
-        success: '#27ae60',
-        error: '#e74c3c',
-        warning: '#f39c12',
-        info: '#0099ff'
-    };
-
-    alert.style.backgroundColor = colors[type] || colors.info;
-    alert.style.color = 'white';
-
-    document.body.appendChild(alert);
-
-    // Remover alerta después de 3 segundos
-    setTimeout(() => {
-        alert.style.animation = 'slideOut 0.3s ease-out forwards';
-        setTimeout(() => {
-            alert.remove();
-        }, 300);
-    }, 3000);
-}
-
-// Agregar animaciones CSS
-const style = document.createElement('style');
-style.textContent = `
-    @keyframes slideIn {
-        from {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-        to {
-            transform: translateX(0);
-            opacity: 1;
-        }
-    }
-
-    @keyframes slideOut {
-        from {
-            transform: translateX(0);
-            opacity: 1;
-        }
-        to {
-            transform: translateX(400px);
-            opacity: 0;
-        }
-    }
-`;
-document.head.appendChild(style);
-
-// ============================================
-// MANEJO DE ERRORES GLOBALES
-// ============================================
-window.addEventListener('error', function(event) {
-    console.error('Error global:', event.error);
-    showAlert('Ocurrió un error inesperado', 'error');
-});
-
-// ============================================
-// API HELPER (para futuras conexiones al backend)
-// ============================================
 const API = {
-    baseURL: 'http://localhost:3000/api',
+    getUserId() {
+        const user = getCurrentUser();
+        return user?.id;
+    },
 
-    async request(endpoint, options = {}) {
-        try {
-            const response = await fetch(`${this.baseURL}${endpoint}`, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    ...options.headers
-                },
-                ...options
-            });
+    getHeaders(includeJson = false) {
+        const headers = {};
+        const userId = this.getUserId();
 
-            if (!response.ok) {
-                throw new Error(`Error: ${response.status}`);
-            }
-
-            return await response.json();
-        } catch (error) {
-            console.error('API Error:', error);
-            showAlert('Error al conectar con el servidor', 'error');
-            throw error;
+        if (includeJson) {
+            headers['Content-Type'] = 'application/json';
         }
+
+        if (userId) {
+            headers['x-user-id'] = userId;
+        }
+
+        return headers;
     },
 
-    get(endpoint) {
-        return this.request(endpoint, { method: 'GET' });
+    async request(url, options = {}) {
+        const response = await fetch(url, options);
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.message || 'Error en la petición');
+        }
+
+        return result;
     },
 
-    post(endpoint, data) {
-        return this.request(endpoint, {
+    get(url) {
+        return this.request(url, {
+            headers: this.getHeaders()
+        });
+    },
+
+    post(url, data) {
+        return this.request(url, {
             method: 'POST',
+            headers: this.getHeaders(true),
             body: JSON.stringify(data)
         });
     },
 
-    put(endpoint, data) {
-        return this.request(endpoint, {
+    put(url, data) {
+        return this.request(url, {
             method: 'PUT',
+            headers: this.getHeaders(true),
             body: JSON.stringify(data)
         });
-    },
-
-    delete(endpoint) {
-        return this.request(endpoint, { method: 'DELETE' });
     }
 };
 
-// Ejemplo de uso futuro:
-// API.get('/equipment').then(data => console.log(data));
+function getCurrentUser() {
+    return JSON.parse(localStorage.getItem('user') || 'null');
+}
+
+function showAlert(message, type = 'info') {
+    document.querySelector('.app-alert')?.remove();
+
+    const alert = document.createElement('div');
+    alert.className = `app-alert app-alert-${type}`;
+    alert.textContent = message;
+    document.body.appendChild(alert);
+
+    setTimeout(() => alert.remove(), 3000);
+}
+
+function escapeHtml(value) {
+    return String(value ?? '')
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#039;');
+}
+
+function initLogin() {
+    const loginForm = document.getElementById('loginForm');
+
+    if (!loginForm) {
+        return;
+    }
+
+    loginForm.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        try {
+            const data = await API.post('/api/login', {
+                username: document.getElementById('username').value.trim(),
+                password: document.getElementById('password').value
+            });
+
+            localStorage.setItem('user', JSON.stringify(data.user));
+            showAlert('Bienvenido', 'success');
+
+            setTimeout(() => {
+                window.location.href = '/dashboard.html';
+            }, 700);
+        } catch (error) {
+            showAlert(error.message || 'Usuario o contraseña incorrectos', 'error');
+        }
+    });
+}
+
+function initDashboard() {
+    if (!document.querySelector('.dashboard-page')) {
+        return;
+    }
+
+    const user = getCurrentUser();
+
+    if (!user) {
+        window.location.href = '/';
+        return;
+    }
+
+    const userName = document.querySelector('.user-name');
+    const userAvatar = document.querySelector('.user-avatar');
+
+    if (userName) {
+        userName.textContent = `${user.username} (${user.role})`;
+    }
+
+    if (userAvatar) {
+        userAvatar.textContent = user.username.slice(0, 2).toUpperCase();
+    }
+
+    document.getElementById('userMenuBtn')?.addEventListener('click', () => {
+        document.getElementById('userDropdown')?.classList.toggle('active');
+    });
+
+    document.getElementById('logoutBtn')?.addEventListener('click', (event) => {
+        event.preventDefault();
+        localStorage.removeItem('user');
+        window.location.href = '/';
+    });
+
+    document.querySelectorAll('.nav-item[data-page], .card-clickable[data-action]').forEach((item) => {
+        item.addEventListener('click', () => showPage(item.dataset.page || item.dataset.action));
+    });
+
+    document.getElementById('reportAreaSelect')?.addEventListener('change', loadFollowUpReports);
+
+    initEquipmentDatabase(user);
+    loadFollowUpReports();
+}
+
+function showPage(page) {
+    document.querySelectorAll('.page').forEach((section) => {
+        section.classList.remove('active');
+    });
+
+    document.getElementById(`${page}-page`)?.classList.add('active');
+
+    document.querySelectorAll('.nav-item').forEach((navItem) => {
+        navItem.classList.toggle('active', navItem.dataset.page === page);
+    });
+}
+
+async function loadEquipment() {
+    return API.get('/api/equipment?includeInactive=1');
+}
+
+function renderEquipment(equipment) {
+    const tableBody = document.getElementById('equipmentTableBody');
+    const select = document.getElementById('readingEquipment');
+    const areaFilter = document.getElementById('equipmentAreaFilter');
+    const selectedArea = areaFilter?.value || '';
+    const visibleEquipment = selectedArea
+        ? equipment.filter((item) => item.area === selectedArea)
+        : equipment;
+
+    if (tableBody) {
+        tableBody.innerHTML = visibleEquipment.length
+            ? visibleEquipment.map((item) => `
+                <tr>
+                    <td>${escapeHtml(item.equipment_key)}</td>
+                    <td>${escapeHtml(item.name)}</td>
+                    <td>${escapeHtml(item.area || '-')}</td>
+                    <td>${item.critical ? 'Crítico' : 'General'}</td>
+                    <td>${item.active ? 'Activo' : 'Inactivo'}</td>
+                    <td>
+                        <button class="btn-table-action" type="button" data-edit-equipment="${item.id}">
+                            Editar
+                        </button>
+                    </td>
+                </tr>
+            `).join('')
+            : '<tr><td class="empty-row" colspan="6">Sin equipos registrados</td></tr>';
+    }
+
+    if (select) {
+        const activeEquipment = equipment.filter((item) => item.active);
+        select.innerHTML = activeEquipment.length
+            ? activeEquipment.map((item) => `
+                <option value="${item.id}">${escapeHtml(item.equipment_key)} - ${escapeHtml(item.name)}</option>
+            `).join('')
+            : '<option value="">Sin equipos disponibles</option>';
+    }
+
+    if (areaFilter) {
+        const areas = [...new Set(equipment.map((item) => item.area).filter(Boolean))].sort();
+        areaFilter.innerHTML = `
+            <option value="">Todas las áreas</option>
+            ${areas.map((area) => `
+                <option value="${escapeHtml(area)}"${area === selectedArea ? ' selected' : ''}>${escapeHtml(area)}</option>
+            `).join('')}
+        `;
+    }
+
+    document.querySelectorAll('[data-edit-equipment]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const equipmentId = Number(button.dataset.editEquipment);
+            const item = equipment.find((candidate) => candidate.id === equipmentId);
+
+            if (item) {
+                setEquipmentFormMode(item);
+            }
+        });
+    });
+}
+
+async function loadDailyReadings() {
+    const tableBody = document.getElementById('dailyReadingsTableBody');
+
+    if (!tableBody) {
+        return;
+    }
+
+    try {
+        const readings = await API.get('/api/daily-readings');
+
+        tableBody.innerHTML = readings.length
+            ? readings.map((item) => {
+                const findings = [
+                    item.vibration ? 'Vibración' : '',
+                    item.noise ? 'Ruido' : '',
+                    item.cleaning_required ? 'Limpieza' : ''
+                ].filter(Boolean).join(', ') || '-';
+
+                return `
+                    <tr>
+                        <td>${escapeHtml(new Date(item.date).toLocaleString())}</td>
+                        <td>${escapeHtml(item.equipment_key)}</td>
+                        <td>${escapeHtml(item.equipment_name)}</td>
+                        <td>${escapeHtml(item.temperature)} °C</td>
+                        <td>${escapeHtml(item.current)} A</td>
+                        <td>${escapeHtml(findings)}</td>
+                        <td>${escapeHtml(item.comments || '-')}</td>
+                    </tr>
+                `;
+            }).join('')
+            : '<tr><td class="empty-row" colspan="7">Sin registros diarios</td></tr>';
+    } catch (error) {
+        tableBody.innerHTML = '<tr><td class="empty-row" colspan="7">No tienes permiso para ver registros</td></tr>';
+    }
+}
+
+function formatRelativeDate(dateValue) {
+    const date = new Date(dateValue);
+    const diffDays = Math.floor((Date.now() - date.getTime()) / 86400000);
+
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    if (diffDays <= 0) {
+        return 'Hoy';
+    }
+
+    if (diffDays === 1) {
+        return 'Ayer';
+    }
+
+    return `Hace ${diffDays} días`;
+}
+
+function getReportFindings(item) {
+    return [
+        item.vibration ? { label: 'Vibración', className: 'report-flag-vibration' } : null,
+        item.noise ? { label: 'Ruido', className: 'report-flag-noise' } : null,
+        item.cleaning_required ? { label: 'Limpieza', className: 'report-flag-dirt' } : null,
+        (item.comments || '').trim() ? { label: 'Comentario', className: 'report-flag-comment' } : null
+    ].filter(Boolean);
+}
+
+function renderFollowUpReports(reports) {
+    const reportList = document.getElementById('followUpReportList');
+
+    if (!reportList) {
+        return;
+    }
+
+    if (!reports.length) {
+        reportList.innerHTML = `
+            <article class="report-card">
+                <p class="report-desc">No hay equipos con hallazgos pendientes de seguimiento.</p>
+            </article>
+        `;
+        return;
+    }
+
+    reportList.innerHTML = reports.map((item) => {
+        const comments = (item.comments || '').trim();
+
+        return `
+            <article class="report-card">
+                <div class="report-card-top">
+                    <div>
+                        <span class="report-title">${escapeHtml(item.equipment_key)} - ${escapeHtml(item.equipment_name)}</span>
+                        <span class="report-area-label">Área: ${escapeHtml(item.area || '-')}</span>
+                    </div>
+                    <span class="report-days">${escapeHtml(formatRelativeDate(item.date))}</span>
+                </div>
+                <p class="report-desc">
+                    Temperatura: ${escapeHtml(item.temperature)} °C · Corriente: ${escapeHtml(item.current)} A
+                    ${comments ? `<br>Comentarios: ${escapeHtml(comments)}` : ''}
+                </p>
+                <div class="report-flags">
+                    ${getReportFindings(item).map((finding) => `
+                        <span class="report-flag ${finding.className}">${escapeHtml(finding.label)}</span>
+                    `).join('')}
+                </div>
+            </article>
+        `;
+    }).join('');
+}
+
+async function loadFollowUpReports() {
+    const reportList = document.getElementById('followUpReportList');
+
+    if (!reportList) {
+        return;
+    }
+
+    try {
+        const area = document.getElementById('reportAreaSelect')?.value || '';
+        const query = area ? `?area=${encodeURIComponent(area)}` : '';
+        renderFollowUpReports(await API.get(`/api/follow-up-reports${query}`));
+    } catch (error) {
+        reportList.innerHTML = `
+            <article class="report-card">
+                <p class="report-desc">No se pudieron cargar los reportes de seguimiento.</p>
+            </article>
+        `;
+    }
+}
+
+async function refreshEquipmentDatabase() {
+    const equipment = await loadEquipment();
+    renderEquipment(equipment);
+    await loadDailyReadings();
+    await loadFollowUpReports();
+}
+
+function initEquipmentDatabase(user) {
+    const equipmentForm = document.getElementById('equipmentForm');
+    const dailyReadingForm = document.getElementById('dailyReadingForm');
+
+    if (equipmentForm && !user.permissions?.includes('motors:create')) {
+        equipmentForm.style.display = 'none';
+    }
+
+    document.getElementById('equipmentAreaFilter')?.addEventListener('change', async () => {
+        renderEquipment(await loadEquipment());
+    });
+
+    document.getElementById('equipmentCancelBtn')?.addEventListener('click', resetEquipmentForm);
+
+    refreshEquipmentDatabase().catch((error) => {
+        showAlert(error.message || 'Error al cargar equipos', 'error');
+    });
+
+    equipmentForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const equipmentId = document.getElementById('equipmentId').value;
+        const payload = {
+            equipment_key: document.getElementById('equipmentKey').value,
+            name: document.getElementById('equipmentName').value,
+            area: document.getElementById('equipmentArea').value,
+            critical: document.getElementById('equipmentCritical').checked,
+            active: document.getElementById('equipmentActive').checked
+        };
+
+        try {
+            if (equipmentId) {
+                await API.put(`/api/equipment/${equipmentId}`, payload);
+            } else {
+                await API.post('/api/equipment', payload);
+            }
+
+            resetEquipmentForm();
+            await refreshEquipmentDatabase();
+            showPage('equipment');
+            showAlert(equipmentId ? 'Equipo actualizado' : 'Equipo guardado', 'success');
+        } catch (error) {
+            showAlert(error.message || 'Error al guardar equipo', 'error');
+        }
+    });
+
+    dailyReadingForm?.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        try {
+            await API.post('/api/daily-readings', {
+                motor_id: document.getElementById('readingEquipment').value,
+                temperature: Number(document.getElementById('readingTemperature').value),
+                current: Number(document.getElementById('readingCurrent').value),
+                vibration: document.getElementById('readingVibration').checked,
+                noise: document.getElementById('readingNoise').checked,
+                cleaning_required: document.getElementById('readingCleaning').checked,
+                comments: document.getElementById('readingComments').value
+            });
+
+            dailyReadingForm.reset();
+            await loadDailyReadings();
+            await loadFollowUpReports();
+            showPage('general');
+            showAlert('Recorrido guardado', 'success');
+        } catch (error) {
+            showAlert(error.message || 'Error al guardar recorrido', 'error');
+        }
+    });
+}
+
+function setEquipmentFormMode(item) {
+    document.getElementById('equipmentId').value = item.id;
+    document.getElementById('equipmentKey').value = item.equipment_key || '';
+    document.getElementById('equipmentName').value = item.name || '';
+    document.getElementById('equipmentArea').value = item.area || '';
+    document.getElementById('equipmentCritical').checked = Boolean(item.critical);
+    document.getElementById('equipmentActive').checked = Boolean(item.active);
+    document.getElementById('equipmentSubmitBtn').textContent = 'Actualizar equipo';
+    document.getElementById('equipmentCancelBtn').style.display = 'inline-block';
+    showPage('equipment');
+}
+
+function resetEquipmentForm() {
+    const equipmentForm = document.getElementById('equipmentForm');
+
+    if (!equipmentForm) {
+        return;
+    }
+
+    equipmentForm.reset();
+    document.getElementById('equipmentId').value = '';
+    document.getElementById('equipmentActive').checked = true;
+    document.getElementById('equipmentSubmitBtn').textContent = 'Guardar equipo';
+    document.getElementById('equipmentCancelBtn').style.display = 'none';
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    initLogin();
+    initDashboard();
+});
