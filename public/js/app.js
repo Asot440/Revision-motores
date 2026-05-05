@@ -48,6 +48,21 @@ const API = {
             headers: this.getHeaders(true),
             body: JSON.stringify(data)
         });
+    },
+
+    patch(url, data) {
+        return this.request(url, {
+            method: 'PATCH',
+            headers: this.getHeaders(true),
+            body: JSON.stringify(data)
+        });
+    },
+
+    delete(url) {
+        return this.request(url, {
+            method: 'DELETE',
+            headers: this.getHeaders()
+        });
     }
 };
 
@@ -141,9 +156,19 @@ function initDashboard() {
     });
 
     document.getElementById('reportAreaSelect')?.addEventListener('change', loadFollowUpReports);
+    ['reportsAreaFilter', 'reportsDateFilter', 'reportsFindingFilter'].forEach((filterId) => {
+        document.getElementById(filterId)?.addEventListener('change', loadReports);
+    });
+    document.getElementById('reportsClearFilters')?.addEventListener('click', () => {
+        document.getElementById('reportsAreaFilter').value = '';
+        document.getElementById('reportsDateFilter').value = '';
+        document.getElementById('reportsFindingFilter').value = '';
+        loadReports();
+    });
 
     initEquipmentDatabase(user);
     loadFollowUpReports();
+    loadReports();
 }
 
 function showPage(page) {
@@ -156,29 +181,55 @@ function showPage(page) {
     document.querySelectorAll('.nav-item').forEach((navItem) => {
         navItem.classList.toggle('active', navItem.dataset.page === page);
     });
+
+    if (page === 'reports') {
+        loadReports();
+    }
 }
 
 async function loadEquipment() {
     return API.get('/api/equipment?includeInactive=1');
 }
 
-function renderEquipmentOptions(selectId, equipment, critical) {
+let equipmentCache = [];
+
+function renderEquipmentOptions(selectId, equipment, critical, area = '') {
     const select = document.getElementById(selectId);
 
     if (!select) {
         return;
     }
 
-    const available = equipment.filter((item) => item.active && Boolean(item.critical) === critical);
+    const available = equipment.filter((item) => (
+        item.active
+        && Boolean(item.critical) === critical
+        && (!area || item.area === area)
+    ));
 
     select.innerHTML = available.length
         ? available.map((item) => `
             <option value="${item.id}">${escapeHtml(item.equipment_key)} - ${escapeHtml(item.name)}</option>
         `).join('')
-        : '<option value="">Sin equipos disponibles</option>';
+        : '<option value="">Sin equipos para esta área</option>';
+}
+
+function refreshReviewEquipmentOptions() {
+    renderEquipmentOptions(
+        'readingEquipment',
+        equipmentCache,
+        false,
+        document.getElementById('readingArea')?.value || ''
+    );
+    renderEquipmentOptions(
+        'criticalReadingEquipment',
+        equipmentCache,
+        true,
+        document.getElementById('criticalReadingArea')?.value || ''
+    );
 }
 
 function renderEquipment(equipment) {
+    equipmentCache = equipment;
     const tableBody = document.getElementById('equipmentTableBody');
     const areaFilter = document.getElementById('equipmentAreaFilter');
     const selectedArea = areaFilter?.value || '';
@@ -193,20 +244,23 @@ function renderEquipment(equipment) {
                     <td>${escapeHtml(item.equipment_key)}</td>
                     <td>${escapeHtml(item.name)}</td>
                     <td>${escapeHtml(item.area || '-')}</td>
+                    <td>${item.nominal_current ?? '-'} A</td>
                     <td>${item.critical ? 'Crítico' : 'General'}</td>
                     <td>${item.active ? 'Activo' : 'Inactivo'}</td>
                     <td>
                         <button class="btn-table-action" type="button" data-edit-equipment="${item.id}">
                             Editar
                         </button>
+                        <button class="btn-table-action btn-table-danger" type="button" data-delete-equipment="${item.id}">
+                            Eliminar
+                        </button>
                     </td>
                 </tr>
             `).join('')
-            : '<tr><td class="empty-row" colspan="6">Sin equipos registrados</td></tr>';
+            : '<tr><td class="empty-row" colspan="7">Sin equipos registrados</td></tr>';
     }
 
-    renderEquipmentOptions('readingEquipment', equipment, false);
-    renderEquipmentOptions('criticalReadingEquipment', equipment, true);
+    refreshReviewEquipmentOptions();
 
     if (areaFilter) {
         const areas = [...new Set(equipment.map((item) => item.area).filter(Boolean))].sort();
@@ -228,24 +282,53 @@ function renderEquipment(equipment) {
             }
         });
     });
+
+    document.querySelectorAll('[data-delete-equipment]').forEach((button) => {
+        button.addEventListener('click', async () => {
+            const equipmentId = Number(button.dataset.deleteEquipment);
+            const item = equipment.find((candidate) => candidate.id === equipmentId);
+
+            if (!item) {
+                return;
+            }
+
+            const confirmed = window.confirm(`¿Eliminar el equipo ${item.equipment_key} - ${item.name}?`);
+
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                await API.delete(`/api/equipment/${equipmentId}`);
+                await refreshEquipmentDatabase();
+                showAlert('Equipo eliminado', 'success');
+            } catch (error) {
+                showAlert(error.message || 'Error al eliminar equipo', 'error');
+            }
+        });
+    });
 }
 
 function renderReadingsTable(tableBody, readings, emptyMessage) {
     tableBody.innerHTML = readings.length
         ? readings.map((item) => {
             const findings = [
+                item.equipment_stopped ? 'Equipo parado' : '',
+                item.overloaded ? 'Sobrecargado' : '',
                 item.vibration ? 'Vibración' : '',
                 item.noise ? 'Ruido' : '',
                 item.cleaning_required ? 'Limpieza' : ''
             ].filter(Boolean).join(', ') || '-';
+            const temperature = item.equipment_stopped ? '-' : `${escapeHtml(item.temperature)} °C`;
+            const current = item.equipment_stopped ? '-' : `${escapeHtml(item.current)} A`;
 
             return `
                 <tr>
-                    <td>${escapeHtml(new Date(item.date).toLocaleString())}</td>
+                    <td>${escapeHtml(formatRecordDate(item.date))}</td>
                     <td>${escapeHtml(item.equipment_key)}</td>
                     <td>${escapeHtml(item.equipment_name)}</td>
-                    <td>${escapeHtml(item.temperature)} °C</td>
-                    <td>${escapeHtml(item.current)} A</td>
+                    <td>${temperature}</td>
+                    <td>${current}</td>
                     <td>${escapeHtml(findings)}</td>
                     <td>${escapeHtml(item.comments || '-')}</td>
                 </tr>
@@ -301,13 +384,142 @@ function formatRelativeDate(dateValue) {
     return `Hace ${diffDays} días`;
 }
 
-function getReportFindings(item) {
+function formatRecordDate(dateValue) {
+    const date = new Date(dateValue);
+
+    if (Number.isNaN(date.getTime())) {
+        return '';
+    }
+
+    return date.toLocaleDateString();
+}
+
+function getReportFindings(item, includeStopped = false) {
     return [
+        includeStopped && item.equipment_stopped ? { label: 'Equipo parado', className: 'report-flag-stopped' } : null,
         item.vibration ? { label: 'Vibración', className: 'report-flag-vibration' } : null,
         item.noise ? { label: 'Ruido', className: 'report-flag-noise' } : null,
+        item.overloaded ? { label: 'Sobrecargado', className: 'report-flag-overload' } : null,
         item.cleaning_required ? { label: 'Limpieza', className: 'report-flag-dirt' } : null,
         (item.comments || '').trim() ? { label: 'Comentario', className: 'report-flag-comment' } : null
     ].filter(Boolean);
+}
+
+function hasClosableFinding(item) {
+    return !item.finding_closed && getReportFindings(item, false).length > 0;
+}
+
+async function closeReportFinding(reportId) {
+    const actionTaken = window.prompt('Describe la acción realizada para atender el hallazgo:');
+
+    if (actionTaken === null) {
+        return;
+    }
+
+    if (!actionTaken.trim()) {
+        showAlert('La acción realizada es obligatoria', 'error');
+        return;
+    }
+
+    try {
+        await API.patch(`/api/reports/${reportId}/close`, {
+            action_taken: actionTaken.trim()
+        });
+        await loadFollowUpReports();
+        await loadReports();
+        showAlert('Hallazgo cerrado', 'success');
+    } catch (error) {
+        showAlert(error.message || 'No se pudo cerrar el hallazgo', 'error');
+    }
+}
+
+function getReportFilterQuery() {
+    const params = new URLSearchParams();
+    const area = document.getElementById('reportsAreaFilter')?.value || '';
+    const date = document.getElementById('reportsDateFilter')?.value || '';
+    const finding = document.getElementById('reportsFindingFilter')?.value || '';
+
+    if (area) {
+        params.set('area', area);
+    }
+
+    if (date) {
+        params.set('date', date);
+    }
+
+    if (finding) {
+        params.set('finding', finding);
+    }
+
+    const query = params.toString();
+    return query ? `?${query}` : '';
+}
+
+function renderReportsTable(reports) {
+    const tableBody = document.getElementById('reportsTableBody');
+
+    if (!tableBody) {
+        return;
+    }
+
+    if (!reports.length) {
+        tableBody.innerHTML = '<tr><td class="empty-row" colspan="11">Sin reportes con los filtros seleccionados</td></tr>';
+        return;
+    }
+
+    tableBody.innerHTML = reports.map((item) => {
+        const findings = getReportFindings(item, true);
+        const findingsHtml = findings.length
+            ? findings.map((finding) => `<span class="report-flag ${finding.className}">${escapeHtml(finding.label)}</span>`).join('')
+            : '<span class="report-flag">Sin hallazgos</span>';
+        const temperature = item.equipment_stopped ? '-' : `${escapeHtml(item.temperature)} \u00b0C`;
+        const current = item.equipment_stopped ? '-' : `${escapeHtml(item.current)} A`;
+        const actionHtml = item.finding_closed
+            ? `
+                <div class="action-note">
+                    <strong>Cerrado</strong>
+                    <span>${escapeHtml(item.action_taken || '-')}</span>
+                    ${item.closed_by_username ? `<small>Por ${escapeHtml(item.closed_by_username)}</small>` : ''}
+                </div>
+            `
+            : hasClosableFinding(item)
+                ? `<button class="btn-table-action" type="button" data-close-report="${item.id}">Atender</button>`
+                : '<span class="muted-text">Sin acción pendiente</span>';
+
+        return `
+            <tr>
+                <td>${escapeHtml(formatRecordDate(item.date))}</td>
+                <td>${item.critical ? 'Cr\u00edtica' : 'General'}</td>
+                <td>${escapeHtml(item.area || '-')}</td>
+                <td>${escapeHtml(item.equipment_key)}</td>
+                <td>${escapeHtml(item.equipment_name)}</td>
+                <td>${temperature}</td>
+                <td>${current}</td>
+                <td><div class="report-flags report-flags-table">${findingsHtml}</div></td>
+                <td>${escapeHtml(item.comments || '-')}</td>
+                <td>${actionHtml}</td>
+                <td>${escapeHtml(item.username || '-')}</td>
+            </tr>
+        `;
+    }).join('');
+
+    document.querySelectorAll('[data-close-report]').forEach((button) => {
+        button.addEventListener('click', () => closeReportFinding(button.dataset.closeReport));
+    });
+}
+
+async function loadReports() {
+    const tableBody = document.getElementById('reportsTableBody');
+
+    if (!tableBody) {
+        return;
+    }
+
+    try {
+        renderReportsTable(await API.get(`/api/reports${getReportFilterQuery()}`));
+    } catch (error) {
+        tableBody.innerHTML = '<tr><td class="empty-row" colspan="11">No se pudieron cargar los reportes</td></tr>';
+    }
 }
 
 function renderFollowUpReports(reports) {
@@ -339,7 +551,9 @@ function renderFollowUpReports(reports) {
                     <span class="report-days">${escapeHtml(formatRelativeDate(item.date))}</span>
                 </div>
                 <p class="report-desc">
-                    Temperatura: ${escapeHtml(item.temperature)} °C · Corriente: ${escapeHtml(item.current)} A
+                    ${item.equipment_stopped
+                        ? 'Equipo parado, sin valores registrados'
+                        : `Temperatura: ${escapeHtml(item.temperature)} °C · Corriente: ${escapeHtml(item.current)} A${item.nominal_current ? ` · Nominal: ${escapeHtml(item.nominal_current)} A` : ''}`}
                     ${comments ? `<br>Comentarios: ${escapeHtml(comments)}` : ''}
                 </p>
                 <div class="report-flags">
@@ -347,9 +561,16 @@ function renderFollowUpReports(reports) {
                         <span class="report-flag ${finding.className}">${escapeHtml(finding.label)}</span>
                     `).join('')}
                 </div>
+                <button class="btn-table-action report-action-btn" type="button" data-close-report="${item.id}">
+                    Atender
+                </button>
             </article>
         `;
     }).join('');
+
+    reportList.querySelectorAll('[data-close-report]').forEach((button) => {
+        button.addEventListener('click', () => closeReportFinding(button.dataset.closeReport));
+    });
 }
 
 async function loadFollowUpReports() {
@@ -377,6 +598,7 @@ async function refreshEquipmentDatabase() {
     renderEquipment(equipment);
     await loadDailyReadings();
     await loadFollowUpReports();
+    await loadReports();
 }
 
 function initEquipmentDatabase(user) {
@@ -391,6 +613,8 @@ function initEquipmentDatabase(user) {
     });
 
     document.getElementById('equipmentCancelBtn')?.addEventListener('click', resetEquipmentForm);
+    document.getElementById('readingArea')?.addEventListener('change', refreshReviewEquipmentOptions);
+    document.getElementById('criticalReadingArea')?.addEventListener('change', refreshReviewEquipmentOptions);
 
     refreshEquipmentDatabase().catch((error) => {
         showAlert(error.message || 'Error al cargar equipos', 'error');
@@ -404,6 +628,7 @@ function initEquipmentDatabase(user) {
             equipment_key: document.getElementById('equipmentKey').value,
             name: document.getElementById('equipmentName').value,
             area: document.getElementById('equipmentArea').value,
+            nominal_current: document.getElementById('equipmentNominalCurrent').value,
             critical: document.getElementById('equipmentCritical').checked,
             active: document.getElementById('equipmentActive').checked
         };
@@ -426,7 +651,9 @@ function initEquipmentDatabase(user) {
 
     setupReadingForm({
         formId: 'dailyReadingForm',
+        areaId: 'readingArea',
         equipmentId: 'readingEquipment',
+        stoppedId: 'readingStopped',
         temperatureId: 'readingTemperature',
         currentId: 'readingCurrent',
         vibrationId: 'readingVibration',
@@ -438,7 +665,9 @@ function initEquipmentDatabase(user) {
 
     setupReadingForm({
         formId: 'criticalReadingForm',
+        areaId: 'criticalReadingArea',
         equipmentId: 'criticalReadingEquipment',
+        stoppedId: 'criticalReadingStopped',
         temperatureId: 'criticalReadingTemperature',
         currentId: 'criticalReadingCurrent',
         vibrationId: 'criticalReadingVibration',
@@ -456,14 +685,40 @@ function setupReadingForm(config) {
         return;
     }
 
+    const stoppedInput = document.getElementById(config.stoppedId);
+    const temperatureInput = document.getElementById(config.temperatureId);
+    const currentInput = document.getElementById(config.currentId);
+
+    stoppedInput?.addEventListener('change', () => {
+        const stopped = stoppedInput.checked;
+        temperatureInput.required = !stopped;
+        currentInput.required = !stopped;
+        temperatureInput.disabled = stopped;
+        currentInput.disabled = stopped;
+
+        if (stopped) {
+            temperatureInput.value = '';
+            currentInput.value = '';
+        }
+    });
+
     form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
         try {
+            const stopped = document.getElementById(config.stoppedId).checked;
+            const equipmentId = document.getElementById(config.equipmentId).value;
+
+            if (!equipmentId) {
+                showAlert('Selecciona un equipo del área indicada', 'error');
+                return;
+            }
+
             await API.post('/api/daily-readings', {
-                motor_id: document.getElementById(config.equipmentId).value,
-                temperature: Number(document.getElementById(config.temperatureId).value),
-                current: Number(document.getElementById(config.currentId).value),
+                motor_id: equipmentId,
+                equipment_stopped: stopped,
+                temperature: stopped ? null : Number(document.getElementById(config.temperatureId).value),
+                current: stopped ? null : Number(document.getElementById(config.currentId).value),
                 vibration: document.getElementById(config.vibrationId).checked,
                 noise: document.getElementById(config.noiseId).checked,
                 cleaning_required: document.getElementById(config.cleaningId).checked,
@@ -471,8 +726,15 @@ function setupReadingForm(config) {
             });
 
             form.reset();
+            document.getElementById(config.areaId).value = '';
+            refreshReviewEquipmentOptions();
+            temperatureInput.required = true;
+            currentInput.required = true;
+            temperatureInput.disabled = false;
+            currentInput.disabled = false;
             await loadDailyReadings();
             await loadFollowUpReports();
+            await loadReports();
             showPage(config.page);
             showAlert('Recorrido guardado', 'success');
         } catch (error) {
@@ -486,6 +748,7 @@ function setEquipmentFormMode(item) {
     document.getElementById('equipmentKey').value = item.equipment_key || '';
     document.getElementById('equipmentName').value = item.name || '';
     document.getElementById('equipmentArea').value = item.area || '';
+    document.getElementById('equipmentNominalCurrent').value = item.nominal_current ?? '';
     document.getElementById('equipmentCritical').checked = Boolean(item.critical);
     document.getElementById('equipmentActive').checked = Boolean(item.active);
     document.getElementById('equipmentSubmitBtn').textContent = 'Actualizar equipo';

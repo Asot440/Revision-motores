@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - Motor Monitoring System</title>
+    <title>Monitoreo de equipos</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 
@@ -16,16 +16,9 @@
                 <div class="logo-mini-text">
                     <span class="brand-primary">Smurfit</span><span class="brand-secondary">WestRock</span>
                 </div>
-                <span>Motor Monitoring</span>
+                <span>Monitoreo de equipos</span>
             </div>
             <div class="header-actions">
-                <button class="btn-icon" id="notificationsBtn" title="Notificaciones">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                        stroke-width="2">
-                        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-                        <path d="M13.73 21a2 2 0 0 1-3.46 0" />
-                    </svg>
-                </button>
                 <div class="user-menu">
                     <button class="btn-user" id="userMenuBtn">
                         <span class="user-avatar">AR</span>
@@ -36,9 +29,6 @@
                         </svg>
                     </button>
                     <div class="dropdown-menu" id="userDropdown">
-                        <a href="#" class="dropdown-item">Mi Perfil</a>
-                        <a href="#" class="dropdown-item">Configuración</a>
-                        <hr>
                         <a href="#" class="dropdown-item logout" id="logoutBtn">Cerrar Sesión</a>
                     </div>
                 </div>
@@ -126,10 +116,10 @@
                                 </svg>
                             </div>
                             <h3>Revisión de Equipo Crítico</h3>
-                            <p>Monitorea equipos críticos con temperatura y corriente.</p>
+                            <p>Registro diario de equipos que detienen la operaci&oacute;n si fallan.</p>
                             <div class="card-footer">
-                                <span class="badge badge-critical">5 Activos</span>
-                                <span class="arrow">→</span>
+                                <span class="card-action-label">Abrir revisi&oacute;n</span>
+                                <span class="arrow">&rarr;</span>
                             </div>
                         </div>
 
@@ -142,10 +132,10 @@
                                 </svg>
                             </div>
                             <h3>Revisión de Equipo General</h3>
-                            <p>Supervisa todos los equipos del sistema y su estado general</p>
+                            <p>Registro quincenal de equipos generales por &aacute;rea.</p>
                             <div class="card-footer">
-                                <span class="badge badge-general">12 Activos</span>
-                                <span class="arrow">→</span>
+                                <span class="card-action-label">Abrir revisi&oacute;n</span>
+                                <span class="arrow">&rarr;</span>
                             </div>
                         </div>
                     </aside>
@@ -155,15 +145,15 @@
                             <div class="reports-header">
                                 <div>
                                     <h2>Reportes</h2>
-                                    <p>Visualiza reportes generados durante ambas revisiones.</p>
+                                    <p>Hallazgos pendientes de atenci&oacute;n.</p>
                                 </div>
                                 <div class="report-filter-group">
-                                    <label for="reportAreaSelect">Área</label>
+                                    <label for="reportAreaSelect">&Aacute;rea</label>
                                     <select id="reportAreaSelect" class="report-area-select">
                                         <option value="">Todas</option>
                                         <option>Central de pastas</option>
-                                        <option>Máquina 2</option>
-                                        <option>Máquina 3</option>
+                                        <option>M&aacute;quina no. 2</option>
+                                        <option>M&aacute;quina no. 3</option>
                                     </select>
                                 </div>
                             </div>
@@ -187,7 +177,17 @@
                             <h2>Registro diario</h2>
                         </div>
                         <form id="criticalReadingForm" class="daily-reading-form">
+                            <select id="criticalReadingArea" required>
+                                <option value="">Área</option>
+                                <option>Central de pastas</option>
+                                <option>Máquina no. 2</option>
+                                <option>Máquina no. 3</option>
+                            </select>
                             <select id="criticalReadingEquipment" required></select>
+                            <label class="inline-check">
+                                <input type="checkbox" id="criticalReadingStopped">
+                                <span>Equipo parado</span>
+                            </label>
                             <input type="number" id="criticalReadingTemperature" placeholder="Temperatura °C" step="0.1" required>
                             <input type="number" id="criticalReadingCurrent" placeholder="Corriente A" step="0.1" required>
                             <label class="inline-check">
@@ -247,7 +247,13 @@
                             <input type="hidden" id="equipmentId">
                             <input type="text" id="equipmentKey" placeholder="Clave del equipo" required>
                             <input type="text" id="equipmentName" placeholder="Nombre del equipo" required>
-                            <input type="text" id="equipmentArea" placeholder="Área">
+                            <select id="equipmentArea" required>
+                                <option value="">Área</option>
+                                <option>Central de pastas</option>
+                                <option>Máquina no. 2</option>
+                                <option>Máquina no. 3</option>
+                            </select>
+                            <input type="number" id="equipmentNominalCurrent" placeholder="Corriente nominal A" step="0.1" min="0">
                             <label class="inline-check">
                                 <input type="checkbox" id="equipmentCritical">
                                 <span>Crítico</span>
@@ -275,6 +281,7 @@
                                         <th>Clave</th>
                                         <th>Equipo</th>
                                         <th>Área</th>
+                                        <th>Corriente nominal</th>
                                         <th>Tipo</th>
                                         <th>Estado</th>
                                         <th>Acciones</th>
@@ -300,7 +307,17 @@
                             <h2>Registro diario</h2>
                         </div>
                         <form id="dailyReadingForm" class="daily-reading-form">
+                            <select id="readingArea" required>
+                                <option value="">Área</option>
+                                <option>Central de pastas</option>
+                                <option>Máquina no. 2</option>
+                                <option>Máquina no. 3</option>
+                            </select>
                             <select id="readingEquipment" required></select>
+                            <label class="inline-check">
+                                <input type="checkbox" id="readingStopped">
+                                <span>Equipo parado</span>
+                            </label>
                             <input type="number" id="readingTemperature" placeholder="Temperatura °C" step="0.1" required>
                             <input type="number" id="readingCurrent" placeholder="Corriente A" step="0.1" required>
                             <label class="inline-check">
@@ -346,12 +363,65 @@
 
             <!-- Page: Reports -->
             <div class="page" id="reports-page">
-                <div class="page-header">
+                <div class="page-header reports-main-header">
                     <h1>Reportes</h1>
-                    <p>Genera y visualiza reportes de tu sistema de monitoreo</p>
+                    <p>Visualiza todos los registros generados en las revisiones</p>
                 </div>
-                <div class="content-placeholder">
-                    <p>Sección de reportes (próximamente)</p>
+                <div class="equipment-db-layout single-column reports-page-layout">
+                    <section class="equipment-panel equipment-panel-wide">
+                        <div class="reports-toolbar">
+                            <div class="report-filter-group">
+                                <label for="reportsAreaFilter">&Aacute;rea</label>
+                                <select id="reportsAreaFilter" class="report-area-select">
+                                    <option value="">Todas</option>
+                                    <option>Central de pastas</option>
+                                    <option>M&aacute;quina no. 2</option>
+                                    <option>M&aacute;quina no. 3</option>
+                                </select>
+                            </div>
+                            <div class="report-filter-group">
+                                <label for="reportsDateFilter">D&iacute;a</label>
+                                <input type="date" id="reportsDateFilter" class="report-area-select">
+                            </div>
+                            <div class="report-filter-group">
+                                <label for="reportsFindingFilter">Hallazgo</label>
+                                <select id="reportsFindingFilter" class="report-area-select">
+                                    <option value="">Todos</option>
+                                    <option value="vibration">Vibraci&oacute;n</option>
+                                    <option value="noise">Ruido</option>
+                                    <option value="cleaning">Requiere limpieza</option>
+                                    <option value="comments">Comentario</option>
+                                    <option value="overloaded">Sobrecargado</option>
+                                    <option value="stopped">Equipo parado</option>
+                                    <option value="none">Sin hallazgos</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-secondary reports-clear-btn" id="reportsClearFilters">
+                                Limpiar filtros
+                            </button>
+                        </div>
+
+                        <div class="equipment-table-wrap">
+                            <table class="data-table reports-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Revisi&oacute;n</th>
+                                        <th>&Aacute;rea</th>
+                                        <th>Clave</th>
+                                        <th>Equipo</th>
+                                        <th>Temp</th>
+                                        <th>Corriente</th>
+                                        <th>Hallazgos</th>
+                                        <th>Comentarios</th>
+                                        <th>Acci&oacute;n</th>
+                                        <th>Usuario</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="reportsTableBody"></tbody>
+                            </table>
+                        </div>
+                    </section>
                 </div>
             </div>
         </main>

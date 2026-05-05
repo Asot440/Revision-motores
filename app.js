@@ -7,6 +7,7 @@ const app = express();
 const db = new sqlite3.Database(path.join(__dirname, 'database.db'));
 const PORT = process.env.PORT || 3000;
 const BCRYPT_ROUNDS = 12;
+const ALLOWED_AREAS = ['Central de pastas', 'Máquina no. 2', 'Máquina no. 3'];
 
 const ROLE_PERMISSIONS = {
     admin: [
@@ -81,6 +82,26 @@ function normalizeRole(role) {
     return ROLE_PERMISSIONS[role] ? role : 'viewer';
 }
 
+function normalizeArea(area) {
+    const areaMap = {
+        'Maquina 2': 'Máquina no. 2',
+        'Máquina 2': 'Máquina no. 2',
+        'Maquina no. 2': 'Máquina no. 2',
+        'Maquina 3': 'Máquina no. 3',
+        'Máquina 3': 'Máquina no. 3',
+        'Maquina no. 3': 'Máquina no. 3',
+        'Central de pastas': 'Central de pastas'
+    };
+
+    return areaMap[area] || area;
+}
+
+function getLocalDateTime() {
+    const now = new Date();
+    const offsetMs = now.getTimezoneOffset() * 60000;
+    return new Date(now.getTime() - offsetMs).toISOString().slice(0, 19).replace('T', ' ');
+}
+
 function normalizePermissions(role, permissions) {
     if (Array.isArray(permissions) && permissions.length > 0) {
         return permissions;
@@ -145,6 +166,17 @@ async function initializeDatabase() {
 
     await ensureColumn('motors', 'equipment_key', 'TEXT');
     await ensureColumn('motors', 'active', 'INTEGER DEFAULT 1');
+    await ensureColumn('motors', 'nominal_current', 'REAL');
+
+    await dbRun(`
+        UPDATE motors
+        SET area = CASE
+            WHEN area IN ('Maquina 2', 'Máquina 2', 'Máquina no. 2') THEN 'Máquina no. 2'
+            WHEN area IN ('Maquina 3', 'Máquina 3', 'Máquina no. 3') THEN 'Máquina no. 3'
+            WHEN area IN ('Central de pastas') THEN 'Central de pastas'
+            ELSE area
+        END
+    `);
 
     await dbRun(`
         DELETE FROM motors
@@ -186,6 +218,11 @@ async function initializeDatabase() {
     `);
 
     await ensureColumn('inspection_details', 'cleaning_required', 'INTEGER DEFAULT 0');
+    await ensureColumn('inspection_details', 'equipment_stopped', 'INTEGER DEFAULT 0');
+    await ensureColumn('inspection_details', 'action_taken', 'TEXT');
+    await ensureColumn('inspection_details', 'finding_closed', 'INTEGER DEFAULT 0');
+    await ensureColumn('inspection_details', 'closed_at', 'TEXT');
+    await ensureColumn('inspection_details', 'closed_by', 'INTEGER');
 
     await dbRun(`
         UPDATE inspection_details
@@ -196,8 +233,8 @@ async function initializeDatabase() {
     await dbRun(`
         INSERT OR IGNORE INTO motors(equipment_key, name, area, critical, active)
         VALUES
-            ('MP2-010', 'M.B. Vacio no. 1', 'Maquina 2', 1, 1),
-            ('MP2-011', 'M.B. Vacio no. 2', 'Maquina 2', 1, 1),
+            ('MP2-010', 'M.B. Vacio no. 1', 'Máquina no. 2', 1, 1),
+            ('MP2-011', 'M.B. Vacio no. 2', 'Máquina no. 2', 1, 1),
             ('CP-001', 'Bomba central de pastas', 'Central de pastas', 0, 1)
     `);
 
@@ -364,6 +401,7 @@ async function listEquipment(req, res) {
                 equipment_key,
                 name,
                 area,
+                nominal_current,
                 critical,
                 active
             FROM motors
@@ -390,20 +428,33 @@ app.post('/api/equipment', async (req, res) => {
             equipment_key,
             name,
             area = '',
+            nominal_current = null,
             critical = 0
         } = req.body;
+
+        const normalizedArea = normalizeArea(area.trim());
 
         if (!equipment_key || !name) {
             return res.status(400).json({ message: 'Clave y nombre del equipo son obligatorios' });
         }
 
+        if (!ALLOWED_AREAS.includes(normalizedArea)) {
+            return res.status(400).json({ message: 'Área no válida' });
+        }
+
         const result = await dbRun(
-            `INSERT INTO motors(equipment_key, name, area, critical, active) VALUES (?, ?, ?, ?, 1)`,
-            [equipment_key.trim().toUpperCase(), name.trim(), area.trim(), critical ? 1 : 0]
+            `INSERT INTO motors(equipment_key, name, area, nominal_current, critical, active) VALUES (?, ?, ?, ?, ?, 1)`,
+            [
+                equipment_key.trim().toUpperCase(),
+                name.trim(),
+                normalizedArea,
+                nominal_current === null || nominal_current === '' ? null : Number(nominal_current),
+                critical ? 1 : 0
+            ]
         );
 
         const equipment = await dbGet(
-            `SELECT id, equipment_key, name, area, critical, active FROM motors WHERE id = ?`,
+            `SELECT id, equipment_key, name, area, nominal_current, critical, active FROM motors WHERE id = ?`,
             [result.lastID]
         );
 
@@ -429,22 +480,30 @@ app.put('/api/equipment/:id', async (req, res) => {
             equipment_key,
             name,
             area = '',
+            nominal_current = null,
             critical = 0,
             active = 1
         } = req.body;
+
+        const normalizedArea = normalizeArea(area.trim());
 
         if (!equipment_key || !name) {
             return res.status(400).json({ message: 'Clave y nombre del equipo son obligatorios' });
         }
 
+        if (!ALLOWED_AREAS.includes(normalizedArea)) {
+            return res.status(400).json({ message: 'Área no válida' });
+        }
+
         await dbRun(
             `UPDATE motors
-             SET equipment_key = ?, name = ?, area = ?, critical = ?, active = ?
+             SET equipment_key = ?, name = ?, area = ?, nominal_current = ?, critical = ?, active = ?
              WHERE id = ?`,
             [
                 equipment_key.trim().toUpperCase(),
                 name.trim(),
-                area.trim(),
+                normalizedArea,
+                nominal_current === null || nominal_current === '' ? null : Number(nominal_current),
                 critical ? 1 : 0,
                 active ? 1 : 0,
                 req.params.id
@@ -452,7 +511,7 @@ app.put('/api/equipment/:id', async (req, res) => {
         );
 
         const equipment = await dbGet(
-            `SELECT id, equipment_key, name, area, critical, active FROM motors WHERE id = ?`,
+            `SELECT id, equipment_key, name, area, nominal_current, critical, active FROM motors WHERE id = ?`,
             [req.params.id]
         );
 
@@ -467,6 +526,42 @@ app.put('/api/equipment/:id', async (req, res) => {
         }
 
         res.status(500).json({ message: 'Error al editar equipo' });
+    }
+});
+
+app.delete('/api/equipment/:id', async (req, res) => {
+    try {
+        const requester = await requirePermission(req, res, 'motors:create');
+
+        if (!requester) {
+            return;
+        }
+
+        const equipment = await dbGet(
+            `SELECT id FROM motors WHERE id = ?`,
+            [req.params.id]
+        );
+
+        if (!equipment) {
+            return res.status(404).json({ message: 'Equipo no encontrado' });
+        }
+
+        await dbRun(
+            `DELETE FROM inspection_details WHERE motor_id = ?`,
+            [req.params.id]
+        );
+        await dbRun(
+            `DELETE FROM inspections
+             WHERE id NOT IN (SELECT inspection_id FROM inspection_details)`
+        );
+        await dbRun(
+            `DELETE FROM motors WHERE id = ?`,
+            [req.params.id]
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ message: 'Error al eliminar equipo' });
     }
 });
 
@@ -496,8 +591,17 @@ app.get('/api/daily-readings', async (req, res) => {
                 motors.equipment_key,
                 motors.name AS equipment_name,
                 motors.area,
+                motors.nominal_current,
                 inspection_details.temperature,
                 inspection_details.current,
+                CASE
+                    WHEN COALESCE(inspection_details.equipment_stopped, 0) = 0
+                        AND motors.nominal_current IS NOT NULL
+                        AND inspection_details.current > motors.nominal_current
+                    THEN 1
+                    ELSE 0
+                END AS overloaded,
+                COALESCE(inspection_details.equipment_stopped, 0) AS equipment_stopped,
                 inspection_details.vibration,
                 inspection_details.noise,
                 COALESCE(inspection_details.cleaning_required, inspection_details.dirty, 0) AS cleaning_required,
@@ -542,22 +646,42 @@ app.get('/api/follow-up-reports', async (req, res) => {
                 motors.equipment_key,
                 motors.name AS equipment_name,
                 motors.area,
+                motors.nominal_current,
                 inspection_details.temperature,
                 inspection_details.current,
+                CASE
+                    WHEN COALESCE(inspection_details.equipment_stopped, 0) = 0
+                        AND motors.nominal_current IS NOT NULL
+                        AND inspection_details.current > motors.nominal_current
+                    THEN 1
+                    ELSE 0
+                END AS overloaded,
+                COALESCE(inspection_details.equipment_stopped, 0) AS equipment_stopped,
                 inspection_details.vibration,
                 inspection_details.noise,
                 COALESCE(inspection_details.cleaning_required, inspection_details.dirty, 0) AS cleaning_required,
-                inspection_details.comments
+                inspection_details.comments,
+                inspection_details.action_taken,
+                COALESCE(inspection_details.finding_closed, 0) AS finding_closed,
+                inspection_details.closed_at,
+                closer.username AS closed_by_username
             FROM inspection_details
             INNER JOIN inspections ON inspections.id = inspection_details.inspection_id
             INNER JOIN motors ON motors.id = inspection_details.motor_id
             LEFT JOIN users ON users.id = inspections.user_id
+            LEFT JOIN users AS closer ON closer.id = inspection_details.closed_by
             WHERE (
                 inspection_details.vibration = 1
                 OR inspection_details.noise = 1
+                OR (
+                    COALESCE(inspection_details.equipment_stopped, 0) = 0
+                    AND motors.nominal_current IS NOT NULL
+                    AND inspection_details.current > motors.nominal_current
+                )
                 OR COALESCE(inspection_details.cleaning_required, inspection_details.dirty, 0) = 1
                 OR TRIM(COALESCE(inspection_details.comments, '')) <> ''
             )
+            AND COALESCE(inspection_details.finding_closed, 0) = 0
             ${areaFilter}
             ORDER BY inspections.date DESC, inspection_details.id DESC
             LIMIT 50
@@ -569,12 +693,154 @@ app.get('/api/follow-up-reports', async (req, res) => {
     }
 });
 
+app.get('/api/reports', async (req, res) => {
+    try {
+        const requester = await requirePermission(req, res, 'reports:read');
+
+        if (!requester) {
+            return;
+        }
+
+        const overloadedCondition = `
+            COALESCE(inspection_details.equipment_stopped, 0) = 0
+            AND motors.nominal_current IS NOT NULL
+            AND inspection_details.current > motors.nominal_current
+        `;
+        const findingsCondition = `
+            inspection_details.vibration = 1
+            OR inspection_details.noise = 1
+            OR COALESCE(inspection_details.cleaning_required, inspection_details.dirty, 0) = 1
+            OR TRIM(COALESCE(inspection_details.comments, '')) <> ''
+            OR (${overloadedCondition})
+            OR COALESCE(inspection_details.equipment_stopped, 0) = 1
+        `;
+        const filters = [];
+        const params = [];
+
+        if (req.query.area) {
+            filters.push('motors.area = ?');
+            params.push(req.query.area);
+        }
+
+        if (req.query.date) {
+            filters.push('DATE(inspections.date) = ?');
+            params.push(req.query.date);
+        }
+
+        switch (req.query.finding) {
+            case 'vibration':
+                filters.push('inspection_details.vibration = 1');
+                break;
+            case 'noise':
+                filters.push('inspection_details.noise = 1');
+                break;
+            case 'cleaning':
+                filters.push('COALESCE(inspection_details.cleaning_required, inspection_details.dirty, 0) = 1');
+                break;
+            case 'comments':
+                filters.push("TRIM(COALESCE(inspection_details.comments, '')) <> ''");
+                break;
+            case 'overloaded':
+                filters.push(`(${overloadedCondition})`);
+                break;
+            case 'stopped':
+                filters.push('COALESCE(inspection_details.equipment_stopped, 0) = 1');
+                break;
+            case 'none':
+                filters.push(`NOT (${findingsCondition})`);
+                break;
+            default:
+                break;
+        }
+
+        const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
+        const rows = await dbAll(`
+            SELECT
+                inspection_details.id,
+                inspections.date,
+                users.username,
+                motors.equipment_key,
+                motors.name AS equipment_name,
+                motors.area,
+                motors.critical,
+                motors.nominal_current,
+                inspection_details.temperature,
+                inspection_details.current,
+                CASE
+                    WHEN ${overloadedCondition}
+                    THEN 1
+                    ELSE 0
+                END AS overloaded,
+                COALESCE(inspection_details.equipment_stopped, 0) AS equipment_stopped,
+                inspection_details.vibration,
+                inspection_details.noise,
+                COALESCE(inspection_details.cleaning_required, inspection_details.dirty, 0) AS cleaning_required,
+                inspection_details.comments,
+                inspection_details.action_taken,
+                COALESCE(inspection_details.finding_closed, 0) AS finding_closed,
+                inspection_details.closed_at,
+                closer.username AS closed_by_username
+            FROM inspection_details
+            INNER JOIN inspections ON inspections.id = inspection_details.inspection_id
+            INNER JOIN motors ON motors.id = inspection_details.motor_id
+            LEFT JOIN users ON users.id = inspections.user_id
+            LEFT JOIN users AS closer ON closer.id = inspection_details.closed_by
+            ${whereClause}
+            ORDER BY inspections.date DESC, inspection_details.id DESC
+        `, params);
+
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ message: 'Error al consultar reportes' });
+    }
+});
+
+app.patch('/api/reports/:id/close', async (req, res) => {
+    try {
+        const requester = await requirePermission(req, res, 'inspections:create');
+
+        if (!requester) {
+            return;
+        }
+
+        const actionTaken = String(req.body.action_taken || '').trim();
+
+        if (!actionTaken) {
+            return res.status(400).json({ message: 'Describe la acción realizada' });
+        }
+
+        const report = await dbGet(
+            `SELECT id FROM inspection_details WHERE id = ?`,
+            [req.params.id]
+        );
+
+        if (!report) {
+            return res.status(404).json({ message: 'Reporte no encontrado' });
+        }
+
+        await dbRun(
+            `UPDATE inspection_details
+             SET action_taken = ?,
+                 finding_closed = 1,
+                 closed_at = ?,
+                 closed_by = ?
+             WHERE id = ?`,
+            [actionTaken, getLocalDateTime(), requester.id, req.params.id]
+        );
+
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ message: 'Error al cerrar hallazgo' });
+    }
+});
+
 async function createDailyReading(req, res) {
     const {
         equipment_key,
         motor_id,
         temperature,
         current,
+        equipment_stopped,
         cleaning_required,
         dirty,
         noise,
@@ -603,11 +869,16 @@ async function createDailyReading(req, res) {
             return res.status(400).json({ message: 'Equipo requerido' });
         }
 
-        if (temperature === undefined || current === undefined) {
+        const stopped = equipment_stopped ? 1 : 0;
+
+        if (!stopped && (temperature === undefined || temperature === null || current === undefined || current === null)) {
             return res.status(400).json({ message: 'Temperatura y corriente son obligatorias' });
         }
 
-        const inspection = await dbRun(`INSERT INTO inspections(user_id) VALUES(?)`, [requester.id]);
+        const inspection = await dbRun(
+            `INSERT INTO inspections(user_id, date) VALUES(?, ?)`,
+            [requester.id, getLocalDateTime()]
+        );
         const needsCleaning = cleaning_required !== undefined ? cleaning_required : dirty;
 
         await dbRun(
@@ -616,17 +887,19 @@ async function createDailyReading(req, res) {
                 motor_id,
                 temperature,
                 current,
+                equipment_stopped,
                 dirty,
                 cleaning_required,
                 noise,
                 vibration,
                 comments
-            ) VALUES(?,?,?,?,?,?,?,?,?)`,
+            ) VALUES(?,?,?,?,?,?,?,?,?,?)`,
             [
                 inspection.lastID,
                 equipmentId,
-                temperature,
-                current,
+                stopped ? null : temperature,
+                stopped ? null : current,
+                stopped,
                 needsCleaning ? 1 : 0,
                 needsCleaning ? 1 : 0,
                 noise ? 1 : 0,
