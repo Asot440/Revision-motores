@@ -480,6 +480,14 @@ app.get('/api/daily-readings', async (req, res) => {
             return;
         }
 
+        const params = [];
+        let criticalFilter = '';
+
+        if (req.query.critical === '1' || req.query.critical === '0') {
+            criticalFilter = 'WHERE motors.critical = ?';
+            params.push(Number(req.query.critical));
+        }
+
         const rows = await dbAll(`
             SELECT
                 inspection_details.id,
@@ -498,9 +506,10 @@ app.get('/api/daily-readings', async (req, res) => {
             INNER JOIN inspections ON inspections.id = inspection_details.inspection_id
             INNER JOIN motors ON motors.id = inspection_details.motor_id
             LEFT JOIN users ON users.id = inspections.user_id
+            ${criticalFilter}
             ORDER BY inspections.date DESC, inspection_details.id DESC
             LIMIT 100
-        `);
+        `, params);
 
         res.json(rows);
     } catch (err) {

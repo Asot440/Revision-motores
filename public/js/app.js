@@ -31,9 +31,7 @@ const API = {
     },
 
     get(url) {
-        return this.request(url, {
-            headers: this.getHeaders()
-        });
+        return this.request(url, { headers: this.getHeaders() });
     },
 
     post(url, data) {
@@ -164,9 +162,24 @@ async function loadEquipment() {
     return API.get('/api/equipment?includeInactive=1');
 }
 
+function renderEquipmentOptions(selectId, equipment, critical) {
+    const select = document.getElementById(selectId);
+
+    if (!select) {
+        return;
+    }
+
+    const available = equipment.filter((item) => item.active && Boolean(item.critical) === critical);
+
+    select.innerHTML = available.length
+        ? available.map((item) => `
+            <option value="${item.id}">${escapeHtml(item.equipment_key)} - ${escapeHtml(item.name)}</option>
+        `).join('')
+        : '<option value="">Sin equipos disponibles</option>';
+}
+
 function renderEquipment(equipment) {
     const tableBody = document.getElementById('equipmentTableBody');
-    const select = document.getElementById('readingEquipment');
     const areaFilter = document.getElementById('equipmentAreaFilter');
     const selectedArea = areaFilter?.value || '';
     const visibleEquipment = selectedArea
@@ -192,14 +205,8 @@ function renderEquipment(equipment) {
             : '<tr><td class="empty-row" colspan="6">Sin equipos registrados</td></tr>';
     }
 
-    if (select) {
-        const activeEquipment = equipment.filter((item) => item.active);
-        select.innerHTML = activeEquipment.length
-            ? activeEquipment.map((item) => `
-                <option value="${item.id}">${escapeHtml(item.equipment_key)} - ${escapeHtml(item.name)}</option>
-            `).join('')
-            : '<option value="">Sin equipos disponibles</option>';
-    }
+    renderEquipmentOptions('readingEquipment', equipment, false);
+    renderEquipmentOptions('criticalReadingEquipment', equipment, true);
 
     if (areaFilter) {
         const areas = [...new Set(equipment.map((item) => item.area).filter(Boolean))].sort();
@@ -223,40 +230,56 @@ function renderEquipment(equipment) {
     });
 }
 
-async function loadDailyReadings() {
-    const tableBody = document.getElementById('dailyReadingsTableBody');
+function renderReadingsTable(tableBody, readings, emptyMessage) {
+    tableBody.innerHTML = readings.length
+        ? readings.map((item) => {
+            const findings = [
+                item.vibration ? 'Vibración' : '',
+                item.noise ? 'Ruido' : '',
+                item.cleaning_required ? 'Limpieza' : ''
+            ].filter(Boolean).join(', ') || '-';
+
+            return `
+                <tr>
+                    <td>${escapeHtml(new Date(item.date).toLocaleString())}</td>
+                    <td>${escapeHtml(item.equipment_key)}</td>
+                    <td>${escapeHtml(item.equipment_name)}</td>
+                    <td>${escapeHtml(item.temperature)} °C</td>
+                    <td>${escapeHtml(item.current)} A</td>
+                    <td>${escapeHtml(findings)}</td>
+                    <td>${escapeHtml(item.comments || '-')}</td>
+                </tr>
+            `;
+        }).join('')
+        : `<tr><td class="empty-row" colspan="7">${emptyMessage}</td></tr>`;
+}
+
+async function loadReadings(critical) {
+    const tableBody = document.getElementById(
+        critical ? 'criticalReadingsTableBody' : 'dailyReadingsTableBody'
+    );
 
     if (!tableBody) {
         return;
     }
 
     try {
-        const readings = await API.get('/api/daily-readings');
-
-        tableBody.innerHTML = readings.length
-            ? readings.map((item) => {
-                const findings = [
-                    item.vibration ? 'Vibración' : '',
-                    item.noise ? 'Ruido' : '',
-                    item.cleaning_required ? 'Limpieza' : ''
-                ].filter(Boolean).join(', ') || '-';
-
-                return `
-                    <tr>
-                        <td>${escapeHtml(new Date(item.date).toLocaleString())}</td>
-                        <td>${escapeHtml(item.equipment_key)}</td>
-                        <td>${escapeHtml(item.equipment_name)}</td>
-                        <td>${escapeHtml(item.temperature)} °C</td>
-                        <td>${escapeHtml(item.current)} A</td>
-                        <td>${escapeHtml(findings)}</td>
-                        <td>${escapeHtml(item.comments || '-')}</td>
-                    </tr>
-                `;
-            }).join('')
-            : '<tr><td class="empty-row" colspan="7">Sin registros diarios</td></tr>';
+        const readings = await API.get(`/api/daily-readings?critical=${critical ? '1' : '0'}`);
+        renderReadingsTable(
+            tableBody,
+            readings,
+            critical ? 'Sin registros críticos' : 'Sin registros generales'
+        );
     } catch (error) {
         tableBody.innerHTML = '<tr><td class="empty-row" colspan="7">No tienes permiso para ver registros</td></tr>';
     }
+}
+
+async function loadDailyReadings() {
+    await Promise.all([
+        loadReadings(false),
+        loadReadings(true)
+    ]);
 }
 
 function formatRelativeDate(dateValue) {
@@ -358,7 +381,6 @@ async function refreshEquipmentDatabase() {
 
 function initEquipmentDatabase(user) {
     const equipmentForm = document.getElementById('equipmentForm');
-    const dailyReadingForm = document.getElementById('dailyReadingForm');
 
     if (equipmentForm && !user.permissions?.includes('motors:create')) {
         equipmentForm.style.display = 'none';
@@ -402,24 +424,56 @@ function initEquipmentDatabase(user) {
         }
     });
 
-    dailyReadingForm?.addEventListener('submit', async (event) => {
+    setupReadingForm({
+        formId: 'dailyReadingForm',
+        equipmentId: 'readingEquipment',
+        temperatureId: 'readingTemperature',
+        currentId: 'readingCurrent',
+        vibrationId: 'readingVibration',
+        noiseId: 'readingNoise',
+        cleaningId: 'readingCleaning',
+        commentsId: 'readingComments',
+        page: 'general'
+    });
+
+    setupReadingForm({
+        formId: 'criticalReadingForm',
+        equipmentId: 'criticalReadingEquipment',
+        temperatureId: 'criticalReadingTemperature',
+        currentId: 'criticalReadingCurrent',
+        vibrationId: 'criticalReadingVibration',
+        noiseId: 'criticalReadingNoise',
+        cleaningId: 'criticalReadingCleaning',
+        commentsId: 'criticalReadingComments',
+        page: 'critical'
+    });
+}
+
+function setupReadingForm(config) {
+    const form = document.getElementById(config.formId);
+
+    if (!form) {
+        return;
+    }
+
+    form.addEventListener('submit', async (event) => {
         event.preventDefault();
 
         try {
             await API.post('/api/daily-readings', {
-                motor_id: document.getElementById('readingEquipment').value,
-                temperature: Number(document.getElementById('readingTemperature').value),
-                current: Number(document.getElementById('readingCurrent').value),
-                vibration: document.getElementById('readingVibration').checked,
-                noise: document.getElementById('readingNoise').checked,
-                cleaning_required: document.getElementById('readingCleaning').checked,
-                comments: document.getElementById('readingComments').value
+                motor_id: document.getElementById(config.equipmentId).value,
+                temperature: Number(document.getElementById(config.temperatureId).value),
+                current: Number(document.getElementById(config.currentId).value),
+                vibration: document.getElementById(config.vibrationId).checked,
+                noise: document.getElementById(config.noiseId).checked,
+                cleaning_required: document.getElementById(config.cleaningId).checked,
+                comments: document.getElementById(config.commentsId).value
             });
 
-            dailyReadingForm.reset();
+            form.reset();
             await loadDailyReadings();
             await loadFollowUpReports();
-            showPage('general');
+            showPage(config.page);
             showAlert('Recorrido guardado', 'success');
         } catch (error) {
             showAlert(error.message || 'Error al guardar recorrido', 'error');

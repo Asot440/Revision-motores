@@ -178,88 +178,56 @@
             <div class="page" id="critical-page">
                 <div class="page-header">
                     <h1>Revisión de Equipo Crítico</h1>
-                    <p>Monitoreo de equipos críticos con alertas en tiempo real</p>
+                    <p>Recorrido diario de equipos que detienen la máquina si fallan</p>
                 </div>
 
-                <div class="filters">
-                    <input type="text" placeholder="Buscar equipos..." class="search-input">
-                    <select class="filter-select">
-                        <option>Todos los Estados</option>
-                        <option>En Línea</option>
-                        <option>Alerta</option>
-                        <option>Offline</option>
-                    </select>
-                </div>
+                <div class="equipment-db-layout single-column">
+                    <section class="equipment-panel">
+                        <div class="panel-header">
+                            <h2>Registro diario</h2>
+                        </div>
+                        <form id="criticalReadingForm" class="daily-reading-form">
+                            <select id="criticalReadingEquipment" required></select>
+                            <input type="number" id="criticalReadingTemperature" placeholder="Temperatura °C" step="0.1" required>
+                            <input type="number" id="criticalReadingCurrent" placeholder="Corriente A" step="0.1" required>
+                            <label class="inline-check">
+                                <input type="checkbox" id="criticalReadingVibration">
+                                <span>Vibración</span>
+                            </label>
+                            <label class="inline-check">
+                                <input type="checkbox" id="criticalReadingNoise">
+                                <span>Ruido</span>
+                            </label>
+                            <label class="inline-check">
+                                <input type="checkbox" id="criticalReadingCleaning">
+                                <span>Requiere limpieza</span>
+                            </label>
+                            <textarea id="criticalReadingComments" placeholder="Comentarios" rows="3"></textarea>
+                            <button type="submit" class="btn btn-primary">Guardar recorrido crítico</button>
+                        </form>
+                    </section>
 
-                <div class="equipment-list">
-                    <div class="equipment-card">
-                        <div class="equipment-header">
-                            <h3>Motor Principal - Línea A</h3>
-                            <span class="status status-online">En Línea</span>
+                    <section class="equipment-panel equipment-panel-wide">
+                        <div class="panel-header">
+                            <h2>Últimos registros críticos</h2>
                         </div>
-                        <div class="equipment-metrics">
-                            <div class="metric">
-                                <span class="metric-label">Temperatura</span>
-                                <span class="metric-value">48°C</span>
-                                <div class="metric-bar">
-                                    <div class="metric-fill" style="width: 48%"></div>
-                                </div>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">Corriente</span>
-                                <span class="metric-value">32.5 A</span>
-                                <div class="metric-bar">
-                                    <div class="metric-fill" style="width: 65%"></div>
-                                </div>
-                            </div>
+                        <div class="equipment-table-wrap">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>Clave</th>
+                                        <th>Equipo</th>
+                                        <th>Temp</th>
+                                        <th>Corriente</th>
+                                        <th>Hallazgos</th>
+                                        <th>Comentarios</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="criticalReadingsTableBody"></tbody>
+                            </table>
                         </div>
-                    </div>
-
-                    <div class="equipment-card">
-                        <div class="equipment-header">
-                            <h3>Motor de Bomba - Línea B</h3>
-                            <span class="status status-alert">Alerta</span>
-                        </div>
-                        <div class="equipment-metrics">
-                            <div class="metric">
-                                <span class="metric-label">Temperatura</span>
-                                <span class="metric-value">72°C</span>
-                                <div class="metric-bar metric-alert">
-                                    <div class="metric-fill" style="width: 72%"></div>
-                                </div>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">Corriente</span>
-                                <span class="metric-value">38.2 A</span>
-                                <div class="metric-bar">
-                                    <div class="metric-fill" style="width: 76%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="equipment-card">
-                        <div class="equipment-header">
-                            <h3>Motor de Ventilación - Línea C</h3>
-                            <span class="status status-online">En Línea</span>
-                        </div>
-                        <div class="equipment-metrics">
-                            <div class="metric">
-                                <span class="metric-label">Temperatura</span>
-                                <span class="metric-value">42°C</span>
-                                <div class="metric-bar">
-                                    <div class="metric-fill" style="width: 42%"></div>
-                                </div>
-                            </div>
-                            <div class="metric">
-                                <span class="metric-label">Corriente</span>
-                                <span class="metric-value">28.1 A</span>
-                                <div class="metric-bar">
-                                    <div class="metric-fill" style="width: 56%"></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    </section>
                 </div>
             </div>
 
@@ -323,7 +291,7 @@
             <div class="page" id="general-page">
                 <div class="page-header">
                     <h1>Revisión de Equipo General</h1>
-                    <p>Registro diario del recorrido por planta</p>
+                    <p>Recorrido quincenal para equipos generales de planta</p>
                 </div>
 
                 <div class="equipment-db-layout single-column">
