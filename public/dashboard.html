@@ -111,6 +111,17 @@
 
                 <div class="nav-divider">Otros</div>
 
+                <div class="nav-item" data-page="users">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+                        <circle cx="9" cy="7" r="4"></circle>
+                        <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+                        <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                    </svg>
+                    <span>Usuarios</span>
+                </div>
+
                 <div class="nav-item" data-page="reports">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2">
@@ -487,6 +498,63 @@
                     </section>
                 </div>
                 <div class="print-sheet-footer" data-print-footer="general"></div>
+            </div>
+
+            <!-- Page: Users -->
+            <div class="page" id="users-page">
+                <div class="page-header">
+                    <h1>Usuarios</h1>
+                    <p>Registra usuarios, edita sus datos y administra permisos</p>
+                </div>
+
+                <div class="equipment-db-layout">
+                    <section class="equipment-panel">
+                        <div class="panel-header">
+                            <h2>Registrar o editar usuario</h2>
+                        </div>
+                        <form id="userForm" class="user-form">
+                            <input type="hidden" id="userId">
+                            <input type="text" id="userUsername" placeholder="Usuario" required>
+                            <input type="password" id="userPassword" placeholder="Contraseña">
+                            <select id="userRole" required>
+                                <option value="viewer">Visualizador</option>
+                                <option value="technician">Técnico</option>
+                                <option value="supervisor">Supervisor</option>
+                                <option value="admin">Administrador</option>
+                            </select>
+                            <div class="permissions-panel">
+                                <div class="permissions-header">
+                                    <strong>Permisos</strong>
+                                    <button type="button" class="btn-table-action" id="applyRolePermissions">
+                                        Usar permisos del rol
+                                    </button>
+                                </div>
+                                <div class="permissions-grid" id="userPermissions"></div>
+                            </div>
+                            <button type="submit" class="btn btn-primary" id="userSubmitBtn">Guardar usuario</button>
+                            <button type="button" class="btn btn-secondary" id="userCancelBtn">Cancelar edición</button>
+                        </form>
+                    </section>
+
+                    <section class="equipment-panel equipment-panel-wide">
+                        <div class="panel-header">
+                            <h2>Usuarios registrados</h2>
+                        </div>
+                        <div class="equipment-table-wrap">
+                            <table class="data-table users-table">
+                                <thead>
+                                    <tr>
+                                        <th>Usuario</th>
+                                        <th>Rol</th>
+                                        <th>Permisos</th>
+                                        <th>Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="usersTableBody"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
             </div>
 
             <!-- Page: Reports -->

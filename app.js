@@ -384,6 +384,67 @@ app.post('/api/users', async (req, res) => {
     }
 });
 
+app.put('/api/users/:id', async (req, res) => {
+    try {
+        const requester = await requirePermission(req, res, 'users:create');
+
+        if (!requester) {
+            return;
+        }
+
+        const { username, password = '', role = 'viewer', permissions } = req.body;
+
+        if (!username) {
+            return res.status(400).json({ message: 'Usuario obligatorio' });
+        }
+
+        const existingUser = await dbGet(
+            `SELECT id FROM users WHERE id = ?`,
+            [req.params.id]
+        );
+
+        if (!existingUser) {
+            return res.status(404).json({ message: 'Usuario no encontrado' });
+        }
+
+        const normalizedRole = normalizeRole(role);
+        const normalizedPermissions = normalizePermissions(normalizedRole, permissions);
+        const params = [
+            username.trim(),
+            normalizedRole,
+            JSON.stringify(normalizedPermissions)
+        ];
+        let passwordSql = '';
+
+        if (password) {
+            passwordSql = ', password_hash = ?, password = NULL';
+            params.push(await bcrypt.hash(password, BCRYPT_ROUNDS));
+        }
+
+        params.push(req.params.id);
+
+        await dbRun(
+            `UPDATE users
+             SET username = ?, role = ?, permissions = ?${passwordSql}
+             WHERE id = ?`,
+            params
+        );
+
+        const updatedUser = await dbGet(
+            `SELECT id, username, role, permissions FROM users WHERE id = ?`,
+            [req.params.id]
+        );
+
+        res.json({ success: true, user: publicUser(updatedUser) });
+    } catch (err) {
+        if (err.code === 'SQLITE_CONSTRAINT') {
+            return res.status(409).json({ message: 'Ese usuario ya existe' });
+        }
+
+        res.status(500).json({ message: 'Error al editar usuario' });
+    }
+});
+
 async function listEquipment(req, res) {
     try {
         const requester = await requirePermission(req, res, 'motors:read');

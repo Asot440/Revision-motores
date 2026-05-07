@@ -83,6 +83,22 @@ let printTemplate = {
     }
 };
 
+const ROLE_PERMISSIONS = {
+    admin: ['users:create', 'users:read', 'motors:create', 'motors:read', 'inspections:create', 'reports:read'],
+    supervisor: ['users:read', 'motors:create', 'motors:read', 'inspections:create', 'reports:read'],
+    technician: ['motors:read', 'inspections:create'],
+    viewer: ['motors:read', 'reports:read']
+};
+
+const PERMISSION_LABELS = {
+    'users:create': 'Crear y editar usuarios',
+    'users:read': 'Consultar usuarios',
+    'motors:create': 'Crear y editar equipos',
+    'motors:read': 'Consultar equipos',
+    'inspections:create': 'Registrar revisiones',
+    'reports:read': 'Consultar reportes'
+};
+
 function showAlert(message, type = 'info') {
     document.querySelector('.app-alert')?.remove();
 
@@ -188,6 +204,7 @@ function initDashboard() {
     document.getElementById('generalPrintBtn')?.addEventListener('click', () => printReviewQuery(false));
 
     initEquipmentDatabase(user);
+    initUserManagement(user);
     loadFollowUpReports();
     loadReports();
     initReviewQueryDates();
@@ -207,6 +224,10 @@ function showPage(page) {
 
     if (page === 'reports') {
         loadReports();
+    }
+
+    if (page === 'users') {
+        loadUsers();
     }
 
     if (page === 'critical-query') {
@@ -794,6 +815,179 @@ async function refreshEquipmentDatabase() {
     await loadReports();
     await loadReviewQuery(true);
     await loadReviewQuery(false);
+}
+
+function getSelectedUserPermissions() {
+    return [...document.querySelectorAll('[data-user-permission]:checked')]
+        .map((input) => input.value);
+}
+
+function setSelectedUserPermissions(permissions) {
+    document.querySelectorAll('[data-user-permission]').forEach((input) => {
+        input.checked = permissions.includes(input.value);
+    });
+}
+
+function renderUserPermissionInputs() {
+    const container = document.getElementById('userPermissions');
+
+    if (!container) {
+        return;
+    }
+
+    container.innerHTML = Object.entries(PERMISSION_LABELS).map(([permission, label]) => `
+        <label class="inline-check permission-check">
+            <input type="checkbox" value="${escapeHtml(permission)}" data-user-permission>
+            <span>${escapeHtml(label)}</span>
+        </label>
+    `).join('');
+}
+
+function resetUserForm() {
+    const form = document.getElementById('userForm');
+
+    if (!form) {
+        return;
+    }
+
+    form.reset();
+    document.getElementById('userId').value = '';
+    document.getElementById('userRole').value = 'viewer';
+    document.getElementById('userPassword').required = true;
+    document.getElementById('userPassword').placeholder = 'Contraseña';
+    document.getElementById('userSubmitBtn').textContent = 'Guardar usuario';
+    document.getElementById('userCancelBtn').style.display = 'none';
+    setSelectedUserPermissions(ROLE_PERMISSIONS.viewer);
+}
+
+function setUserFormMode(user) {
+    document.getElementById('userId').value = user.id;
+    document.getElementById('userUsername').value = user.username || '';
+    document.getElementById('userPassword').value = '';
+    document.getElementById('userPassword').required = false;
+    document.getElementById('userPassword').placeholder = 'Nueva contraseña (opcional)';
+    document.getElementById('userRole').value = user.role || 'viewer';
+    document.getElementById('userSubmitBtn').textContent = 'Actualizar usuario';
+    document.getElementById('userCancelBtn').style.display = 'inline-block';
+    setSelectedUserPermissions(user.permissions || ROLE_PERMISSIONS[user.role] || []);
+}
+
+function renderUsers(users) {
+    const tableBody = document.getElementById('usersTableBody');
+
+    if (!tableBody) {
+        return;
+    }
+
+    tableBody.innerHTML = users.length
+        ? users.map((user) => `
+            <tr>
+                <td>${escapeHtml(user.username)}</td>
+                <td>${escapeHtml(user.role)}</td>
+                <td>
+                    <div class="permission-tags">
+                        ${(user.permissions || []).map((permission) => `
+                            <span>${escapeHtml(PERMISSION_LABELS[permission] || permission)}</span>
+                        `).join('')}
+                    </div>
+                </td>
+                <td>
+                    <button class="btn-table-action" type="button" data-edit-user="${user.id}">
+                        Editar
+                    </button>
+                </td>
+            </tr>
+        `).join('')
+        : '<tr><td class="empty-row" colspan="4">Sin usuarios registrados</td></tr>';
+
+    document.querySelectorAll('[data-edit-user]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const user = users.find((item) => String(item.id) === String(button.dataset.editUser));
+
+            if (user) {
+                setUserFormMode(user);
+            }
+        });
+    });
+}
+
+async function loadUsers() {
+    const tableBody = document.getElementById('usersTableBody');
+
+    if (!tableBody) {
+        return;
+    }
+
+    try {
+        renderUsers(await API.get('/api/users'));
+    } catch (error) {
+        tableBody.innerHTML = '<tr><td class="empty-row" colspan="4">No se pudieron cargar los usuarios</td></tr>';
+    }
+}
+
+function initUserManagement(user) {
+    const form = document.getElementById('userForm');
+    const usersNavItem = document.querySelector('.nav-item[data-page="users"]');
+
+    if (!form) {
+        return;
+    }
+
+    renderUserPermissionInputs();
+    resetUserForm();
+
+    if (!user.permissions?.includes('users:read')) {
+        usersNavItem?.remove();
+        return;
+    }
+
+    if (!user.permissions?.includes('users:create')) {
+        form.style.display = 'none';
+    }
+
+    document.getElementById('userRole')?.addEventListener('change', (event) => {
+        setSelectedUserPermissions(ROLE_PERMISSIONS[event.target.value] || ROLE_PERMISSIONS.viewer);
+    });
+
+    document.getElementById('applyRolePermissions')?.addEventListener('click', () => {
+        const role = document.getElementById('userRole').value;
+        setSelectedUserPermissions(ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS.viewer);
+    });
+
+    document.getElementById('userCancelBtn')?.addEventListener('click', resetUserForm);
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const userId = document.getElementById('userId').value;
+        const password = document.getElementById('userPassword').value;
+        const payload = {
+            username: document.getElementById('userUsername').value.trim(),
+            role: document.getElementById('userRole').value,
+            permissions: getSelectedUserPermissions()
+        };
+
+        if (password) {
+            payload.password = password;
+        }
+
+        try {
+            if (userId) {
+                await API.put(`/api/users/${userId}`, payload);
+                showAlert('Usuario actualizado', 'success');
+            } else {
+                await API.post('/api/users', payload);
+                showAlert('Usuario creado', 'success');
+            }
+
+            resetUserForm();
+            await loadUsers();
+        } catch (error) {
+            showAlert(error.message || 'No se pudo guardar el usuario', 'error');
+        }
+    });
+
+    loadUsers();
 }
 
 function initEquipmentDatabase(user) {

@@ -1137,25 +1137,76 @@ select:focus {
 }
 
 .equipment-form,
-.daily-reading-form {
+.daily-reading-form,
+.user-form {
     display: grid;
     gap: 12px;
     margin-bottom: 18px;
 }
 
-.equipment-form {
+.equipment-form,
+.user-form {
     grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .equipment-form .btn,
+.user-form .btn,
 .daily-reading-form .btn,
 .daily-reading-form textarea,
 .daily-reading-form select {
     grid-column: 1 / -1;
 }
 
-#equipmentCancelBtn {
+#equipmentCancelBtn,
+#userCancelBtn {
     display: none;
+}
+
+.permissions-panel {
+    grid-column: 1 / -1;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 12px;
+    background-color: #f8fafc;
+}
+
+.permissions-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+}
+
+.permissions-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px 12px;
+}
+
+.permission-check {
+    min-height: 34px;
+}
+
+.permission-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    min-width: 260px;
+}
+
+.permission-tags span {
+    display: inline-flex;
+    padding: 4px 8px;
+    border-radius: 999px;
+    background-color: rgba(36, 119, 179, 0.1);
+    color: var(--color-primary);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.users-table {
+    min-width: 820px;
 }
 
 .btn-secondary {
@@ -1381,7 +1432,9 @@ select:focus {
 
     .equipment-db-layout,
     .equipment-form,
-    .daily-reading-form {
+    .daily-reading-form,
+    .user-form,
+    .permissions-grid {
         grid-template-columns: 1fr;
     }
 
