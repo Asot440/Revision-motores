@@ -72,6 +72,32 @@
                     <span>Revisión de Equipo General</span>
                 </div>
 
+                <div class="nav-item" data-page="critical-query">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M8 6h13"></path>
+                        <path d="M8 12h13"></path>
+                        <path d="M8 18h13"></path>
+                        <path d="M3 6h.01"></path>
+                        <path d="M3 12h.01"></path>
+                        <path d="M3 18h.01"></path>
+                    </svg>
+                    <span>Consultar Revisi&oacute;n Equipo Cr&iacute;tico</span>
+                </div>
+
+                <div class="nav-item" data-page="general-query">
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
+                        <path d="M8 6h13"></path>
+                        <path d="M8 12h13"></path>
+                        <path d="M8 18h13"></path>
+                        <path d="M3 6h.01"></path>
+                        <path d="M3 12h.01"></path>
+                        <path d="M3 18h.01"></path>
+                    </svg>
+                    <span>Consultar Revisi&oacute;n Equipo General</span>
+                </div>
+
                 <div class="nav-item" data-page="equipment">
                     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2">
@@ -361,6 +387,108 @@
                 </div>
             </div>
 
+            <!-- Page: Critical Query -->
+            <div class="page" id="critical-query-page">
+                <div class="page-header">
+                    <h1>Consultar Revisi&oacute;n Equipo Cr&iacute;tico</h1>
+                    <p>Visualiza los registros diarios del equipo cr&iacute;tico por fecha</p>
+                </div>
+                <div class="print-sheet-header" data-print-header="critical"></div>
+
+                <div class="equipment-db-layout single-column">
+                    <section class="equipment-panel equipment-panel-wide">
+                        <div class="reports-toolbar review-query-toolbar">
+                            <div class="report-filter-group">
+                                <label for="criticalQueryDate">D&iacute;a</label>
+                                <input type="date" id="criticalQueryDate" class="report-area-select">
+                            </div>
+                            <div class="report-filter-group">
+                                <label for="criticalQueryArea">&Aacute;rea</label>
+                                <select id="criticalQueryArea" class="report-area-select">
+                                    <option value="">Todas</option>
+                                    <option>Central de pastas</option>
+                                    <option>M&aacute;quina no. 2</option>
+                                    <option>M&aacute;quina no. 3</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-primary" id="criticalQueryBtn">Consultar</button>
+                            <button type="button" class="btn btn-secondary" id="criticalPrintBtn">Imprimir</button>
+                        </div>
+
+                        <div class="equipment-table-wrap">
+                            <table class="data-table review-query-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>&Aacute;rea</th>
+                                        <th>Clave</th>
+                                        <th>Equipo</th>
+                                        <th>Temp</th>
+                                        <th>Corriente</th>
+                                        <th>Hallazgos</th>
+                                        <th>Comentarios</th>
+                                        <th>Usuario</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="criticalQueryTableBody"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+                <div class="print-sheet-footer" data-print-footer="critical"></div>
+            </div>
+
+            <!-- Page: General Query -->
+            <div class="page" id="general-query-page">
+                <div class="page-header">
+                    <h1>Consultar Revisi&oacute;n Equipo General</h1>
+                    <p>Visualiza los registros del equipo general por fecha</p>
+                </div>
+                <div class="print-sheet-header" data-print-header="general"></div>
+
+                <div class="equipment-db-layout single-column">
+                    <section class="equipment-panel equipment-panel-wide">
+                        <div class="reports-toolbar review-query-toolbar">
+                            <div class="report-filter-group">
+                                <label for="generalQueryDate">D&iacute;a</label>
+                                <input type="date" id="generalQueryDate" class="report-area-select">
+                            </div>
+                            <div class="report-filter-group">
+                                <label for="generalQueryArea">&Aacute;rea</label>
+                                <select id="generalQueryArea" class="report-area-select">
+                                    <option value="">Todas</option>
+                                    <option>Central de pastas</option>
+                                    <option>M&aacute;quina no. 2</option>
+                                    <option>M&aacute;quina no. 3</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-primary" id="generalQueryBtn">Consultar</button>
+                            <button type="button" class="btn btn-secondary" id="generalPrintBtn">Imprimir</button>
+                        </div>
+
+                        <div class="equipment-table-wrap">
+                            <table class="data-table review-query-table">
+                                <thead>
+                                    <tr>
+                                        <th>Fecha</th>
+                                        <th>&Aacute;rea</th>
+                                        <th>Clave</th>
+                                        <th>Equipo</th>
+                                        <th>Temp</th>
+                                        <th>Corriente</th>
+                                        <th>Hallazgos</th>
+                                        <th>Comentarios</th>
+                                        <th>Usuario</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="generalQueryTableBody"></tbody>
+                            </table>
+                        </div>
+                    </section>
+                </div>
+                <div class="print-sheet-footer" data-print-footer="general"></div>
+            </div>
+
             <!-- Page: Reports -->
             <div class="page" id="reports-page">
                 <div class="page-header reports-main-header">
@@ -392,8 +520,6 @@
                                     <option value="cleaning">Requiere limpieza</option>
                                     <option value="comments">Comentario</option>
                                     <option value="overloaded">Sobrecargado</option>
-                                    <option value="stopped">Equipo parado</option>
-                                    <option value="none">Sin hallazgos</option>
                                 </select>
                             </div>
                             <button type="button" class="btn btn-secondary reports-clear-btn" id="reportsClearFilters">

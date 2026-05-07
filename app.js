@@ -575,13 +575,25 @@ app.get('/api/daily-readings', async (req, res) => {
             return;
         }
 
+        const filters = [];
         const params = [];
-        let criticalFilter = '';
 
         if (req.query.critical === '1' || req.query.critical === '0') {
-            criticalFilter = 'WHERE motors.critical = ?';
+            filters.push('motors.critical = ?');
             params.push(Number(req.query.critical));
         }
+
+        if (req.query.date) {
+            filters.push('DATE(inspections.date) = ?');
+            params.push(req.query.date);
+        }
+
+        if (req.query.area) {
+            filters.push('motors.area = ?');
+            params.push(req.query.area);
+        }
+
+        const whereClause = filters.length ? `WHERE ${filters.join(' AND ')}` : '';
 
         const rows = await dbAll(`
             SELECT
@@ -610,7 +622,7 @@ app.get('/api/daily-readings', async (req, res) => {
             INNER JOIN inspections ON inspections.id = inspection_details.inspection_id
             INNER JOIN motors ON motors.id = inspection_details.motor_id
             LEFT JOIN users ON users.id = inspections.user_id
-            ${criticalFilter}
+            ${whereClause}
             ORDER BY inspections.date DESC, inspection_details.id DESC
             LIMIT 100
         `, params);
@@ -707,14 +719,18 @@ app.get('/api/reports', async (req, res) => {
             AND inspection_details.current > motors.nominal_current
         `;
         const findingsCondition = `
-            inspection_details.vibration = 1
-            OR inspection_details.noise = 1
-            OR COALESCE(inspection_details.cleaning_required, inspection_details.dirty, 0) = 1
-            OR TRIM(COALESCE(inspection_details.comments, '')) <> ''
-            OR (${overloadedCondition})
-            OR COALESCE(inspection_details.equipment_stopped, 0) = 1
+            (
+                inspection_details.vibration = 1
+                OR inspection_details.noise = 1
+                OR COALESCE(inspection_details.cleaning_required, inspection_details.dirty, 0) = 1
+                OR TRIM(COALESCE(inspection_details.comments, '')) <> ''
+                OR (${overloadedCondition})
+            )
         `;
-        const filters = [];
+        const filters = [
+            `COALESCE(inspection_details.finding_closed, 0) = 0`,
+            findingsCondition
+        ];
         const params = [];
 
         if (req.query.area) {
@@ -742,12 +758,6 @@ app.get('/api/reports', async (req, res) => {
                 break;
             case 'overloaded':
                 filters.push(`(${overloadedCondition})`);
-                break;
-            case 'stopped':
-                filters.push('COALESCE(inspection_details.equipment_stopped, 0) = 1');
-                break;
-            case 'none':
-                filters.push(`NOT (${findingsCondition})`);
                 break;
             default:
                 break;

@@ -70,6 +70,19 @@ function getCurrentUser() {
     return JSON.parse(localStorage.getItem('user') || 'null');
 }
 
+let printTemplate = {
+    companyName: 'EMPAQUES MODERNOS SAN PABLO S. DE R.L. DE C.V.',
+    criticalTitle: 'REVISIÓN DE EQUIPO ELÉCTRICO CRÍTICO',
+    generalTitle: 'REVISIÓN DE EQUIPO ELÉCTRICO GENERAL',
+    logoSrc: 'img/print-logo.jpg',
+    footer: {
+        code: 'F-01-MIF-S-42',
+        version: 'Versión: 0',
+        edition: 'Edición: 1',
+        page: 'Página 1'
+    }
+};
+
 function showAlert(message, type = 'info') {
     document.querySelector('.app-alert')?.remove();
 
@@ -165,10 +178,20 @@ function initDashboard() {
         document.getElementById('reportsFindingFilter').value = '';
         loadReports();
     });
+    document.getElementById('criticalQueryBtn')?.addEventListener('click', () => loadReviewQuery(true));
+    document.getElementById('generalQueryBtn')?.addEventListener('click', () => loadReviewQuery(false));
+    document.getElementById('criticalQueryDate')?.addEventListener('change', () => loadReviewQuery(true));
+    document.getElementById('generalQueryDate')?.addEventListener('change', () => loadReviewQuery(false));
+    document.getElementById('criticalQueryArea')?.addEventListener('change', () => loadReviewQuery(true));
+    document.getElementById('generalQueryArea')?.addEventListener('change', () => loadReviewQuery(false));
+    document.getElementById('criticalPrintBtn')?.addEventListener('click', () => printReviewQuery(true));
+    document.getElementById('generalPrintBtn')?.addEventListener('click', () => printReviewQuery(false));
 
     initEquipmentDatabase(user);
     loadFollowUpReports();
     loadReports();
+    initReviewQueryDates();
+    loadPrintTemplate();
 }
 
 function showPage(page) {
@@ -184,6 +207,14 @@ function showPage(page) {
 
     if (page === 'reports') {
         loadReports();
+    }
+
+    if (page === 'critical-query') {
+        loadReviewQuery(true);
+    }
+
+    if (page === 'general-query') {
+        loadReviewQuery(false);
     }
 }
 
@@ -365,6 +396,84 @@ async function loadDailyReadings() {
     ]);
 }
 
+function renderReviewQueryTable(tableBody, readings, emptyMessage) {
+    tableBody.innerHTML = readings.length
+        ? readings.map((item) => {
+            const findings = [
+                item.equipment_stopped ? 'Equipo parado' : '',
+                item.overloaded ? 'Sobrecargado' : '',
+                item.vibration ? 'Vibración' : '',
+                item.noise ? 'Ruido' : '',
+                item.cleaning_required ? 'Limpieza' : ''
+            ].filter(Boolean).join(', ') || '-';
+            const temperature = item.equipment_stopped ? '-' : `${escapeHtml(item.temperature)} \u00b0C`;
+            const current = item.equipment_stopped ? '-' : `${escapeHtml(item.current)} A`;
+
+            return `
+                <tr>
+                    <td>${escapeHtml(formatRecordDate(item.date))}</td>
+                    <td>${escapeHtml(item.area || '-')}</td>
+                    <td>${escapeHtml(item.equipment_key)}</td>
+                    <td>${escapeHtml(item.equipment_name)}</td>
+                    <td>${temperature}</td>
+                    <td>${current}</td>
+                    <td>${escapeHtml(findings)}</td>
+                    <td>${escapeHtml(item.comments || '-')}</td>
+                    <td>${escapeHtml(item.username || '-')}</td>
+                </tr>
+            `;
+        }).join('')
+        : `<tr><td class="empty-row" colspan="9">${emptyMessage}</td></tr>`;
+}
+
+async function loadReviewQuery(critical) {
+    const dateInput = document.getElementById(critical ? 'criticalQueryDate' : 'generalQueryDate');
+    const areaInput = document.getElementById(critical ? 'criticalQueryArea' : 'generalQueryArea');
+    const tableBody = document.getElementById(critical ? 'criticalQueryTableBody' : 'generalQueryTableBody');
+
+    if (!dateInput || !areaInput || !tableBody) {
+        return;
+    }
+
+    if (!dateInput.value) {
+        dateInput.value = formatInputDate();
+    }
+    renderPrintTemplate();
+
+    try {
+        const params = new URLSearchParams({
+            critical: critical ? '1' : '0',
+            date: dateInput.value
+        });
+
+        if (areaInput.value) {
+            params.set('area', areaInput.value);
+        }
+
+        const readings = await API.get(
+            `/api/daily-readings?${params.toString()}`
+        );
+        renderReviewQueryTable(
+            tableBody,
+            readings,
+            critical ? 'Sin revisión crítica para este día' : 'Sin revisión general para este día'
+        );
+    } catch (error) {
+        tableBody.innerHTML = '<tr><td class="empty-row" colspan="9">No se pudo cargar la revisión</td></tr>';
+    }
+}
+
+async function printReviewQuery(critical) {
+    await loadReviewQuery(critical);
+    renderPrintTemplate();
+    document.body.classList.toggle('print-critical-query', critical);
+    document.body.classList.toggle('print-general-query', !critical);
+    window.print();
+    setTimeout(() => {
+        document.body.classList.remove('print-critical-query', 'print-general-query');
+    }, 500);
+}
+
 function formatRelativeDate(dateValue) {
     const date = new Date(dateValue);
     const diffDays = Math.floor((Date.now() - date.getTime()) / 86400000);
@@ -394,6 +503,77 @@ function formatRecordDate(dateValue) {
     return date.toLocaleDateString();
 }
 
+function formatInputDate(date = new Date()) {
+    const offsetMs = date.getTimezoneOffset() * 60000;
+    return new Date(date.getTime() - offsetMs).toISOString().slice(0, 10);
+}
+
+function initReviewQueryDates() {
+    const today = formatInputDate();
+
+    ['criticalQueryDate', 'generalQueryDate'].forEach((inputId) => {
+        const input = document.getElementById(inputId);
+
+        if (input && !input.value) {
+            input.value = today;
+        }
+    });
+}
+
+async function loadPrintTemplate() {
+    try {
+        const response = await fetch('/print-template.json');
+
+        if (response.ok) {
+            printTemplate = { ...printTemplate, ...(await response.json()) };
+        }
+    } catch (error) {
+        // Keep built-in defaults if the editable template cannot be loaded.
+    }
+
+    renderPrintTemplate();
+}
+
+function getPrintReviewDate(type) {
+    const input = document.getElementById(type === 'critical' ? 'criticalQueryDate' : 'generalQueryDate');
+    return input?.value || formatInputDate();
+}
+
+function renderPrintTemplate() {
+    ['critical', 'general'].forEach((type) => {
+        const title = type === 'critical' ? printTemplate.criticalTitle : printTemplate.generalTitle;
+        const header = document.querySelector(`[data-print-header="${type}"]`);
+        const footer = document.querySelector(`[data-print-footer="${type}"]`);
+
+        if (header) {
+            header.innerHTML = `
+                <div class="print-logo-cell">
+                    <img src="${escapeHtml(printTemplate.logoSrc)}" alt="Logo">
+                </div>
+                <div class="print-company-cell">
+                    ${escapeHtml(printTemplate.companyName)}
+                </div>
+                <div class="print-title-cell">
+                    ${escapeHtml(title || printTemplate.defaultTitle || '')}
+                </div>
+                <div class="print-meta-cell">
+                    <span>FECHA:</span>
+                    <strong class="print-review-date">${escapeHtml(getPrintReviewDate(type))}</strong>
+                </div>
+            `;
+        }
+
+        if (footer) {
+            footer.innerHTML = `
+                <span>${escapeHtml(printTemplate.footer?.page || '')}</span>
+                <span>${escapeHtml(printTemplate.footer?.version || '')}</span>
+                <span>${escapeHtml(printTemplate.footer?.edition || '')}</span>
+                <strong>${escapeHtml(printTemplate.footer?.code || '')}</strong>
+            `;
+        }
+    });
+}
+
 function getReportFindings(item, includeStopped = false) {
     return [
         includeStopped && item.equipment_stopped ? { label: 'Equipo parado', className: 'report-flag-stopped' } : null,
@@ -409,8 +589,11 @@ function hasClosableFinding(item) {
     return !item.finding_closed && getReportFindings(item, false).length > 0;
 }
 
-async function closeReportFinding(reportId) {
-    const actionTaken = window.prompt('Describe la acción realizada para atender el hallazgo:');
+async function saveReportAction(reportId, currentAction = '') {
+    const actionTaken = window.prompt(
+        'Describe la acción realizada para atender el hallazgo:',
+        currentAction
+    );
 
     if (actionTaken === null) {
         return;
@@ -427,9 +610,9 @@ async function closeReportFinding(reportId) {
         });
         await loadFollowUpReports();
         await loadReports();
-        showAlert('Hallazgo cerrado', 'success');
+        showAlert('Acción guardada', 'success');
     } catch (error) {
-        showAlert(error.message || 'No se pudo cerrar el hallazgo', 'error');
+        showAlert(error.message || 'No se pudo guardar la acción', 'error');
     }
 }
 
@@ -471,7 +654,7 @@ function renderReportsTable(reports) {
         const findings = getReportFindings(item, true);
         const findingsHtml = findings.length
             ? findings.map((finding) => `<span class="report-flag ${finding.className}">${escapeHtml(finding.label)}</span>`).join('')
-            : '<span class="report-flag">Sin hallazgos</span>';
+            : '';
         const temperature = item.equipment_stopped ? '-' : `${escapeHtml(item.temperature)} \u00b0C`;
         const current = item.equipment_stopped ? '-' : `${escapeHtml(item.current)} A`;
         const actionHtml = item.finding_closed
@@ -480,6 +663,9 @@ function renderReportsTable(reports) {
                     <strong>Cerrado</strong>
                     <span>${escapeHtml(item.action_taken || '-')}</span>
                     ${item.closed_by_username ? `<small>Por ${escapeHtml(item.closed_by_username)}</small>` : ''}
+                    <button class="btn-table-action action-edit-btn" type="button" data-edit-closed-report="${item.id}">
+                        Editar
+                    </button>
                 </div>
             `
             : hasClosableFinding(item)
@@ -504,7 +690,14 @@ function renderReportsTable(reports) {
     }).join('');
 
     document.querySelectorAll('[data-close-report]').forEach((button) => {
-        button.addEventListener('click', () => closeReportFinding(button.dataset.closeReport));
+        button.addEventListener('click', () => saveReportAction(button.dataset.closeReport));
+    });
+
+    document.querySelectorAll('[data-edit-closed-report]').forEach((button) => {
+        button.addEventListener('click', () => {
+            const report = reports.find((item) => String(item.id) === String(button.dataset.editClosedReport));
+            saveReportAction(button.dataset.editClosedReport, report?.action_taken || '');
+        });
     });
 }
 
@@ -569,7 +762,7 @@ function renderFollowUpReports(reports) {
     }).join('');
 
     reportList.querySelectorAll('[data-close-report]').forEach((button) => {
-        button.addEventListener('click', () => closeReportFinding(button.dataset.closeReport));
+        button.addEventListener('click', () => saveReportAction(button.dataset.closeReport));
     });
 }
 
@@ -599,6 +792,8 @@ async function refreshEquipmentDatabase() {
     await loadDailyReadings();
     await loadFollowUpReports();
     await loadReports();
+    await loadReviewQuery(true);
+    await loadReviewQuery(false);
 }
 
 function initEquipmentDatabase(user) {
@@ -735,6 +930,8 @@ function setupReadingForm(config) {
             await loadDailyReadings();
             await loadFollowUpReports();
             await loadReports();
+            await loadReviewQuery(true);
+            await loadReviewQuery(false);
             showPage(config.page);
             showAlert('Recorrido guardado', 'success');
         } catch (error) {
