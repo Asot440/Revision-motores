@@ -211,7 +211,24 @@
                 <div class="equipment-db-layout single-column">
                     <section class="equipment-panel">
                         <div class="panel-header">
-                            <h2>Registro diario</h2>
+                            <h2>Corriente en subestaci&oacute;n</h2>
+                        </div>
+                        <form id="criticalCurrentForm" class="daily-reading-form">
+                            <select id="criticalCurrentArea" required>
+                                <option value="">&Aacute;rea</option>
+                                <option>Central de pastas</option>
+                                <option>M&aacute;quina no. 2</option>
+                                <option>M&aacute;quina no. 3</option>
+                            </select>
+                            <select id="criticalCurrentEquipment" required></select>
+                            <input type="number" id="criticalCurrentValue" placeholder="Corriente A" step="0.1" required>
+                            <button type="submit" class="btn btn-primary">Guardar corriente</button>
+                        </form>
+                    </section>
+
+                    <section class="equipment-panel">
+                        <div class="panel-header">
+                            <h2>Revisi&oacute;n f&iacute;sica del motor</h2>
                         </div>
                         <form id="criticalReadingForm" class="daily-reading-form">
                             <select id="criticalReadingArea" required>
@@ -226,7 +243,6 @@
                                 <span>Equipo parado</span>
                             </label>
                             <input type="number" id="criticalReadingTemperature" placeholder="Temperatura °C" step="0.1" required>
-                            <input type="number" id="criticalReadingCurrent" placeholder="Corriente A" step="0.1" required>
                             <label class="inline-check">
                                 <input type="checkbox" id="criticalReadingVibration">
                                 <span>Vibración</span>
@@ -240,7 +256,7 @@
                                 <span>Requiere limpieza</span>
                             </label>
                             <textarea id="criticalReadingComments" placeholder="Comentarios" rows="3"></textarea>
-                            <button type="submit" class="btn btn-primary">Guardar recorrido crítico</button>
+                            <button type="submit" class="btn btn-primary">Guardar revisi&oacute;n f&iacute;sica</button>
                         </form>
                     </section>
 
@@ -341,7 +357,24 @@
                 <div class="equipment-db-layout single-column">
                     <section class="equipment-panel">
                         <div class="panel-header">
-                            <h2>Registro diario</h2>
+                            <h2>Corriente en subestaci&oacute;n</h2>
+                        </div>
+                        <form id="currentReadingForm" class="daily-reading-form">
+                            <select id="currentReadingArea" required>
+                                <option value="">&Aacute;rea</option>
+                                <option>Central de pastas</option>
+                                <option>M&aacute;quina no. 2</option>
+                                <option>M&aacute;quina no. 3</option>
+                            </select>
+                            <select id="currentReadingEquipment" required></select>
+                            <input type="number" id="currentReadingValue" placeholder="Corriente A" step="0.1" required>
+                            <button type="submit" class="btn btn-primary">Guardar corriente</button>
+                        </form>
+                    </section>
+
+                    <section class="equipment-panel">
+                        <div class="panel-header">
+                            <h2>Revisi&oacute;n f&iacute;sica del motor</h2>
                         </div>
                         <form id="dailyReadingForm" class="daily-reading-form">
                             <select id="readingArea" required>
@@ -356,7 +389,6 @@
                                 <span>Equipo parado</span>
                             </label>
                             <input type="number" id="readingTemperature" placeholder="Temperatura °C" step="0.1" required>
-                            <input type="number" id="readingCurrent" placeholder="Corriente A" step="0.1" required>
                             <label class="inline-check">
                                 <input type="checkbox" id="readingVibration">
                                 <span>Vibración</span>
@@ -370,7 +402,7 @@
                                 <span>Requiere limpieza</span>
                             </label>
                             <textarea id="readingComments" placeholder="Comentarios" rows="3"></textarea>
-                            <button type="submit" class="btn btn-primary">Guardar recorrido</button>
+                            <button type="submit" class="btn btn-primary">Guardar revisi&oacute;n f&iacute;sica</button>
                         </form>
                     </section>
 

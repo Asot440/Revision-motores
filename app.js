@@ -223,6 +223,10 @@ async function initializeDatabase() {
     await ensureColumn('inspection_details', 'finding_closed', 'INTEGER DEFAULT 0');
     await ensureColumn('inspection_details', 'closed_at', 'TEXT');
     await ensureColumn('inspection_details', 'closed_by', 'INTEGER');
+    await ensureColumn('inspection_details', 'current_user_id', 'INTEGER');
+    await ensureColumn('inspection_details', 'current_recorded_at', 'TEXT');
+    await ensureColumn('inspection_details', 'physical_user_id', 'INTEGER');
+    await ensureColumn('inspection_details', 'physical_recorded_at', 'TEXT');
 
     await dbRun(`
         UPDATE inspection_details
@@ -678,11 +682,15 @@ app.get('/api/daily-readings', async (req, res) => {
                 inspection_details.vibration,
                 inspection_details.noise,
                 COALESCE(inspection_details.cleaning_required, inspection_details.dirty, 0) AS cleaning_required,
-                inspection_details.comments
+                inspection_details.comments,
+                current_user.username AS current_username,
+                physical_user.username AS physical_username
             FROM inspection_details
             INNER JOIN inspections ON inspections.id = inspection_details.inspection_id
             INNER JOIN motors ON motors.id = inspection_details.motor_id
             LEFT JOIN users ON users.id = inspections.user_id
+            LEFT JOIN users AS current_user ON current_user.id = inspection_details.current_user_id
+            LEFT JOIN users AS physical_user ON physical_user.id = inspection_details.physical_user_id
             ${whereClause}
             ORDER BY inspections.date DESC, inspection_details.id DESC
             LIMIT 100
@@ -912,6 +920,7 @@ async function createDailyReading(req, res) {
         temperature,
         current,
         equipment_stopped,
+        reading_section = 'full',
         cleaning_required,
         dirty,
         noise,
@@ -941,16 +950,113 @@ async function createDailyReading(req, res) {
         }
 
         const stopped = equipment_stopped ? 1 : 0;
+        const section = ['current', 'physical', 'full'].includes(reading_section) ? reading_section : 'full';
+        const isCurrentSection = section === 'current';
+        const isPhysicalSection = section === 'physical';
+        const localDateTime = getLocalDateTime();
+        const localDate = localDateTime.slice(0, 10);
 
-        if (!stopped && (temperature === undefined || temperature === null || current === undefined || current === null)) {
+        if (isCurrentSection && (current === undefined || current === null || current === '')) {
+            return res.status(400).json({ message: 'Corriente obligatoria' });
+        }
+
+        if (isPhysicalSection && !stopped && (temperature === undefined || temperature === null || temperature === '')) {
+            return res.status(400).json({ message: 'Temperatura obligatoria' });
+        }
+
+        if (!isCurrentSection && !isPhysicalSection && !stopped && (temperature === undefined || temperature === null || current === undefined || current === null)) {
             return res.status(400).json({ message: 'Temperatura y corriente son obligatorias' });
+        }
+
+        const existingDetail = await dbGet(
+            `SELECT inspection_details.id
+             FROM inspection_details
+             INNER JOIN inspections ON inspections.id = inspection_details.inspection_id
+             WHERE inspection_details.motor_id = ?
+                AND DATE(inspections.date) = ?
+             ORDER BY inspection_details.id DESC
+             LIMIT 1`,
+            [equipmentId, localDate]
+        );
+        const needsCleaning = cleaning_required !== undefined ? cleaning_required : dirty;
+
+        if (existingDetail) {
+            if (isCurrentSection) {
+                await dbRun(
+                    `UPDATE inspection_details
+                     SET current = ?,
+                         current_user_id = ?,
+                         current_recorded_at = ?
+                     WHERE id = ?`,
+                    [current, requester.id, localDateTime, existingDetail.id]
+                );
+            } else if (isPhysicalSection) {
+                await dbRun(
+                    `UPDATE inspection_details
+                     SET temperature = ?,
+                         equipment_stopped = ?,
+                         dirty = ?,
+                         cleaning_required = ?,
+                         noise = ?,
+                         vibration = ?,
+                         comments = ?,
+                         physical_user_id = ?,
+                         physical_recorded_at = ?
+                     WHERE id = ?`,
+                    [
+                        stopped ? null : temperature,
+                        stopped,
+                        needsCleaning ? 1 : 0,
+                        needsCleaning ? 1 : 0,
+                        noise ? 1 : 0,
+                        vibration ? 1 : 0,
+                        comments,
+                        requester.id,
+                        localDateTime,
+                        existingDetail.id
+                    ]
+                );
+            } else {
+                await dbRun(
+                    `UPDATE inspection_details
+                     SET temperature = ?,
+                         current = ?,
+                         equipment_stopped = ?,
+                         dirty = ?,
+                         cleaning_required = ?,
+                         noise = ?,
+                         vibration = ?,
+                         comments = ?,
+                         current_user_id = ?,
+                         current_recorded_at = ?,
+                         physical_user_id = ?,
+                         physical_recorded_at = ?
+                     WHERE id = ?`,
+                    [
+                        stopped ? null : temperature,
+                        stopped ? null : current,
+                        stopped,
+                        needsCleaning ? 1 : 0,
+                        needsCleaning ? 1 : 0,
+                        noise ? 1 : 0,
+                        vibration ? 1 : 0,
+                        comments,
+                        requester.id,
+                        localDateTime,
+                        requester.id,
+                        localDateTime,
+                        existingDetail.id
+                    ]
+                );
+            }
+
+            return res.json({ success: true, updated: true });
         }
 
         const inspection = await dbRun(
             `INSERT INTO inspections(user_id, date) VALUES(?, ?)`,
-            [requester.id, getLocalDateTime()]
+            [requester.id, localDateTime]
         );
-        const needsCleaning = cleaning_required !== undefined ? cleaning_required : dirty;
 
         await dbRun(
             `INSERT INTO inspection_details(
@@ -963,19 +1069,27 @@ async function createDailyReading(req, res) {
                 cleaning_required,
                 noise,
                 vibration,
-                comments
-            ) VALUES(?,?,?,?,?,?,?,?,?,?)`,
+                comments,
+                current_user_id,
+                current_recorded_at,
+                physical_user_id,
+                physical_recorded_at
+            ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
             [
                 inspection.lastID,
                 equipmentId,
-                stopped ? null : temperature,
-                stopped ? null : current,
+                isCurrentSection ? null : (stopped ? null : temperature),
+                isPhysicalSection ? null : (stopped ? null : current),
                 stopped,
-                needsCleaning ? 1 : 0,
-                needsCleaning ? 1 : 0,
-                noise ? 1 : 0,
-                vibration ? 1 : 0,
-                comments
+                isCurrentSection ? 0 : (needsCleaning ? 1 : 0),
+                isCurrentSection ? 0 : (needsCleaning ? 1 : 0),
+                isCurrentSection ? 0 : (noise ? 1 : 0),
+                isCurrentSection ? 0 : (vibration ? 1 : 0),
+                isCurrentSection ? '' : comments,
+                isPhysicalSection ? null : requester.id,
+                isPhysicalSection ? null : localDateTime,
+                isCurrentSection ? null : requester.id,
+                isCurrentSection ? null : localDateTime
             ]
         );
 

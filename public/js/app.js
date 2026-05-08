@@ -278,6 +278,18 @@ function refreshReviewEquipmentOptions() {
         true,
         document.getElementById('criticalReadingArea')?.value || ''
     );
+    renderEquipmentOptions(
+        'currentReadingEquipment',
+        equipmentCache,
+        false,
+        document.getElementById('currentReadingArea')?.value || ''
+    );
+    renderEquipmentOptions(
+        'criticalCurrentEquipment',
+        equipmentCache,
+        true,
+        document.getElementById('criticalCurrentArea')?.value || ''
+    );
 }
 
 function renderEquipment(equipment) {
@@ -365,14 +377,22 @@ function renderReadingsTable(tableBody, readings, emptyMessage) {
     tableBody.innerHTML = readings.length
         ? readings.map((item) => {
             const findings = [
+                item.current === null || item.current === undefined ? 'Pendiente subestación' : '',
+                !item.equipment_stopped && (item.temperature === null || item.temperature === undefined) ? 'Pendiente revisión física' : '',
                 item.equipment_stopped ? 'Equipo parado' : '',
                 item.overloaded ? 'Sobrecargado' : '',
                 item.vibration ? 'Vibración' : '',
                 item.noise ? 'Ruido' : '',
                 item.cleaning_required ? 'Limpieza' : ''
             ].filter(Boolean).join(', ') || '-';
-            const temperature = item.equipment_stopped ? '-' : `${escapeHtml(item.temperature)} °C`;
-            const current = item.equipment_stopped ? '-' : `${escapeHtml(item.current)} A`;
+            const temperature = item.equipment_stopped
+                ? '-'
+                : item.temperature === null || item.temperature === undefined
+                    ? 'Pendiente'
+                    : `${escapeHtml(item.temperature)} °C`;
+            const current = item.current === null || item.current === undefined
+                ? 'Pendiente'
+                : `${escapeHtml(item.current)} A`;
 
             return `
                 <tr>
@@ -421,14 +441,22 @@ function renderReviewQueryTable(tableBody, readings, emptyMessage) {
     tableBody.innerHTML = readings.length
         ? readings.map((item) => {
             const findings = [
+                item.current === null || item.current === undefined ? 'Pendiente subestación' : '',
+                !item.equipment_stopped && (item.temperature === null || item.temperature === undefined) ? 'Pendiente revisión física' : '',
                 item.equipment_stopped ? 'Equipo parado' : '',
                 item.overloaded ? 'Sobrecargado' : '',
                 item.vibration ? 'Vibración' : '',
                 item.noise ? 'Ruido' : '',
                 item.cleaning_required ? 'Limpieza' : ''
             ].filter(Boolean).join(', ') || '-';
-            const temperature = item.equipment_stopped ? '-' : `${escapeHtml(item.temperature)} \u00b0C`;
-            const current = item.equipment_stopped ? '-' : `${escapeHtml(item.current)} A`;
+            const temperature = item.equipment_stopped
+                ? '-'
+                : item.temperature === null || item.temperature === undefined
+                    ? 'Pendiente'
+                    : `${escapeHtml(item.temperature)} \u00b0C`;
+            const current = item.current === null || item.current === undefined
+                ? 'Pendiente'
+                : `${escapeHtml(item.current)} A`;
 
             return `
                 <tr>
@@ -1004,6 +1032,8 @@ function initEquipmentDatabase(user) {
     document.getElementById('equipmentCancelBtn')?.addEventListener('click', resetEquipmentForm);
     document.getElementById('readingArea')?.addEventListener('change', refreshReviewEquipmentOptions);
     document.getElementById('criticalReadingArea')?.addEventListener('change', refreshReviewEquipmentOptions);
+    document.getElementById('currentReadingArea')?.addEventListener('change', refreshReviewEquipmentOptions);
+    document.getElementById('criticalCurrentArea')?.addEventListener('change', refreshReviewEquipmentOptions);
 
     refreshEquipmentDatabase().catch((error) => {
         showAlert(error.message || 'Error al cargar equipos', 'error');
@@ -1044,11 +1074,18 @@ function initEquipmentDatabase(user) {
         equipmentId: 'readingEquipment',
         stoppedId: 'readingStopped',
         temperatureId: 'readingTemperature',
-        currentId: 'readingCurrent',
         vibrationId: 'readingVibration',
         noiseId: 'readingNoise',
         cleaningId: 'readingCleaning',
         commentsId: 'readingComments',
+        page: 'general'
+    });
+
+    setupCurrentForm({
+        formId: 'currentReadingForm',
+        areaId: 'currentReadingArea',
+        equipmentId: 'currentReadingEquipment',
+        currentId: 'currentReadingValue',
         page: 'general'
     });
 
@@ -1058,11 +1095,18 @@ function initEquipmentDatabase(user) {
         equipmentId: 'criticalReadingEquipment',
         stoppedId: 'criticalReadingStopped',
         temperatureId: 'criticalReadingTemperature',
-        currentId: 'criticalReadingCurrent',
         vibrationId: 'criticalReadingVibration',
         noiseId: 'criticalReadingNoise',
         cleaningId: 'criticalReadingCleaning',
         commentsId: 'criticalReadingComments',
+        page: 'critical'
+    });
+
+    setupCurrentForm({
+        formId: 'criticalCurrentForm',
+        areaId: 'criticalCurrentArea',
+        equipmentId: 'criticalCurrentEquipment',
+        currentId: 'criticalCurrentValue',
         page: 'critical'
     });
 }
@@ -1076,18 +1120,14 @@ function setupReadingForm(config) {
 
     const stoppedInput = document.getElementById(config.stoppedId);
     const temperatureInput = document.getElementById(config.temperatureId);
-    const currentInput = document.getElementById(config.currentId);
 
     stoppedInput?.addEventListener('change', () => {
         const stopped = stoppedInput.checked;
         temperatureInput.required = !stopped;
-        currentInput.required = !stopped;
         temperatureInput.disabled = stopped;
-        currentInput.disabled = stopped;
 
         if (stopped) {
             temperatureInput.value = '';
-            currentInput.value = '';
         }
     });
 
@@ -1105,9 +1145,9 @@ function setupReadingForm(config) {
 
             await API.post('/api/daily-readings', {
                 motor_id: equipmentId,
+                reading_section: 'physical',
                 equipment_stopped: stopped,
                 temperature: stopped ? null : Number(document.getElementById(config.temperatureId).value),
-                current: stopped ? null : Number(document.getElementById(config.currentId).value),
                 vibration: document.getElementById(config.vibrationId).checked,
                 noise: document.getElementById(config.noiseId).checked,
                 cleaning_required: document.getElementById(config.cleaningId).checked,
@@ -1118,18 +1158,56 @@ function setupReadingForm(config) {
             document.getElementById(config.areaId).value = '';
             refreshReviewEquipmentOptions();
             temperatureInput.required = true;
-            currentInput.required = true;
             temperatureInput.disabled = false;
-            currentInput.disabled = false;
             await loadDailyReadings();
             await loadFollowUpReports();
             await loadReports();
             await loadReviewQuery(true);
             await loadReviewQuery(false);
             showPage(config.page);
-            showAlert('Recorrido guardado', 'success');
+            showAlert('Revisión física guardada', 'success');
         } catch (error) {
-            showAlert(error.message || 'Error al guardar recorrido', 'error');
+            showAlert(error.message || 'Error al guardar revisión física', 'error');
+        }
+    });
+}
+
+function setupCurrentForm(config) {
+    const form = document.getElementById(config.formId);
+
+    if (!form) {
+        return;
+    }
+
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+
+        const equipmentId = document.getElementById(config.equipmentId).value;
+
+        if (!equipmentId) {
+            showAlert('Selecciona un equipo del área indicada', 'error');
+            return;
+        }
+
+        try {
+            await API.post('/api/daily-readings', {
+                motor_id: equipmentId,
+                reading_section: 'current',
+                current: Number(document.getElementById(config.currentId).value)
+            });
+
+            form.reset();
+            document.getElementById(config.areaId).value = '';
+            refreshReviewEquipmentOptions();
+            await loadDailyReadings();
+            await loadFollowUpReports();
+            await loadReports();
+            await loadReviewQuery(true);
+            await loadReviewQuery(false);
+            showPage(config.page);
+            showAlert('Corriente guardada', 'success');
+        } catch (error) {
+            showAlert(error.message || 'Error al guardar corriente', 'error');
         }
     });
 }
