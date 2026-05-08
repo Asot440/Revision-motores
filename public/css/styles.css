@@ -71,6 +71,7 @@ svg {
    ============================================ */
 .btn {
     display: inline-block;
+    min-height: 44px;
     padding: 10px 20px;
     border: none;
     border-radius: var(--radius-md);
@@ -117,6 +118,7 @@ input[type="number"],
 input[type="date"],
 select {
     width: 100%;
+    min-height: 44px;
     padding: 12px;
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
@@ -230,6 +232,14 @@ select:focus {
 .logo-brand {
     font-size: 32px;
     margin: 0 auto 20px;
+}
+
+.login-logo {
+    display: block;
+    width: min(260px, 82%);
+    height: auto;
+    margin: 0 auto 24px;
+    object-fit: contain;
 }
 
 .logo-mini-text {
@@ -398,16 +408,18 @@ select:focus {
 .logo-mini {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 14px;
     font-weight: 600;
     color: var(--color-primary);
     font-size: 18px;
 }
 
-.logo-mini svg {
-    width: 28px;
-    height: 28px;
-    color: var(--color-accent);
+.header-logo {
+    display: block;
+    width: auto;
+    height: 42px;
+    max-width: 170px;
+    object-fit: contain;
 }
 
 .header-actions {
@@ -1136,6 +1148,13 @@ select:focus {
     margin: 0;
 }
 
+.equipment-filters {
+    display: grid;
+    grid-template-columns: minmax(180px, 240px) minmax(160px, 220px);
+    gap: 10px;
+    align-items: center;
+}
+
 .equipment-form,
 .daily-reading-form,
 .user-form {
@@ -1224,6 +1243,7 @@ select:focus {
     background-color: var(--color-bg-secondary);
     color: var(--color-primary);
     border-radius: var(--radius-sm);
+    min-height: 38px;
     padding: 6px 10px;
     cursor: pointer;
     font-family: inherit;
@@ -1382,12 +1402,65 @@ select:focus {
    RESPONSIVE
    ============================================ */
 @media (max-width: 1024px) {
+    .dashboard-page {
+        height: auto;
+        min-height: 100vh;
+    }
+
+    .header {
+        height: auto;
+        min-height: 64px;
+        padding: 0 14px;
+    }
+
+    .dashboard-container {
+        flex-direction: column;
+        overflow: visible;
+    }
+
     .sidebar {
-        width: 220px;
+        width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--color-border);
+        padding: 8px 10px;
+        position: sticky;
+        top: 64px;
+        z-index: 80;
+        overflow-x: auto;
+        overflow-y: hidden;
+        box-shadow: var(--shadow-sm);
+    }
+
+    .nav-menu {
+        flex-direction: row;
+        align-items: center;
+        gap: 8px;
+        min-width: max-content;
+    }
+
+    .nav-divider {
+        display: none;
+    }
+
+    .nav-item {
+        min-height: 48px;
+        padding: 10px 14px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background-color: var(--color-bg-secondary);
+        white-space: nowrap;
+        font-size: 13px;
+    }
+
+    .nav-item.active {
+        border-left: 1px solid var(--color-primary);
+        border-color: var(--color-primary);
+        padding-left: 14px;
     }
 
     .main-content {
         padding: 20px;
+        overflow: visible;
     }
 
     .cards-grid {
@@ -1399,19 +1472,61 @@ select:focus {
     }
 }
 
-@media (max-width: 768px) {
-    .sidebar {
-        position: fixed;
-        left: -250px;
-        top: 70px;
-        height: calc(100vh - 70px);
-        z-index: 50;
-        transition: var(--transition);
-        box-shadow: var(--shadow-lg);
+@media (min-width: 769px) and (max-width: 1024px) {
+    .equipment-db-layout {
+        grid-template-columns: 1fr;
     }
 
-    .sidebar.open {
-        left: 0;
+    .daily-reading-form {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .daily-reading-form textarea,
+    .daily-reading-form .btn {
+        grid-column: 1 / -1;
+    }
+
+    .home-layout {
+        grid-template-columns: minmax(220px, 280px) 1fr;
+    }
+
+    .reports-toolbar {
+        grid-template-columns: repeat(2, minmax(180px, 1fr));
+    }
+
+    .review-query-toolbar {
+        grid-template-columns: minmax(170px, 220px) minmax(190px, 250px) auto auto;
+    }
+}
+
+@media (max-width: 768px) {
+    body {
+        font-size: 15px;
+    }
+
+    .header {
+        min-height: 62px;
+    }
+
+    .header-content {
+        gap: 12px;
+    }
+
+    .logo-mini {
+        min-width: 0;
+    }
+
+    .logo-mini > span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sidebar {
+        position: sticky;
+        top: 62px;
+        height: auto;
+        box-shadow: var(--shadow-sm);
     }
 
     .dashboard-container {
@@ -1420,6 +1535,11 @@ select:focus {
 
     .main-content {
         padding: 15px;
+    }
+
+    .page-header {
+        margin-bottom: 16px;
+        padding-bottom: 12px;
     }
 
     .page-header h1 {
@@ -1482,24 +1602,96 @@ select:focus {
     .report-filter-group {
         min-width: 100%;
     }
+
+    .home-card,
+    .reports-panel,
+    .equipment-panel {
+        padding: 16px;
+    }
+
+    .daily-reading-form,
+    .equipment-form,
+    .user-form {
+        gap: 10px;
+    }
+
+    input[type="text"],
+    input[type="email"],
+    input[type="password"],
+    input[type="number"],
+    input[type="date"],
+    select,
+    textarea,
+    .btn {
+        min-height: 48px;
+        font-size: 16px;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+    .inline-check {
+        min-height: 48px;
+        padding: 8px 10px;
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        background-color: var(--color-bg-secondary);
+    }
+
+    .inline-check input {
+        width: 20px;
+        height: 20px;
+    }
+
+    .panel-header {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .equipment-filters {
+        grid-template-columns: 1fr;
+        width: 100%;
+    }
+
+    .equipment-table-wrap {
+        margin: 0 -4px;
+        padding-bottom: 4px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .data-table {
+        min-width: 760px;
+    }
+
+    .data-table th,
+    .data-table td {
+        padding: 10px;
+    }
 }
 
 @media (max-width: 480px) {
     .header-content {
-        padding: 0 15px;
+        padding: 0;
     }
 
     .logo-mini {
-        font-size: 14px;
+        font-size: 13px;
+        gap: 6px;
     }
 
-    .logo-mini svg {
-        width: 24px;
-        height: 24px;
+    .login-logo {
+        width: min(220px, 86%);
+        margin-bottom: 18px;
+    }
+
+    .header-logo {
+        height: 34px;
+        max-width: 120px;
     }
 
     .header-actions {
-        gap: 10px;
+        gap: 6px;
     }
 
     .user-name {
@@ -1512,7 +1704,7 @@ select:focus {
     }
 
     .main-content {
-        padding: 10px;
+        padding: 12px;
     }
 
     .page-header h1 {
@@ -1528,6 +1720,45 @@ select:focus {
     .equipment-grid {
         grid-template-columns: 1fr;
         gap: 15px;
+    }
+
+    .nav-item {
+        min-height: 44px;
+        padding: 8px 10px;
+        font-size: 12px;
+        gap: 8px;
+    }
+
+    .nav-item.active {
+        padding-left: 10px;
+    }
+
+    .nav-item svg {
+        width: 18px;
+        height: 18px;
+    }
+
+    .home-card {
+        min-height: 145px;
+    }
+
+    .card-icon {
+        width: 40px;
+        height: 40px;
+        font-size: 20px;
+    }
+
+    .report-title {
+        font-size: 16px;
+    }
+
+    .report-card {
+        padding: 14px;
+    }
+
+    .permissions-header {
+        align-items: stretch;
+        flex-direction: column;
     }
 }
 

@@ -13,9 +13,7 @@
     <header class="header">
         <div class="header-content">
             <div class="logo-mini">
-                <div class="logo-mini-text">
-                    <span class="brand-primary">Smurfit</span><span class="brand-secondary">WestRock</span>
-                </div>
+                <img class="header-logo" src="img/print-logo.jpg" alt="Smurfit WestRock">
                 <span>Monitoreo de equipos</span>
             </div>
             <div class="header-actions">
@@ -323,9 +321,16 @@
                     <section class="equipment-panel equipment-panel-wide">
                         <div class="panel-header">
                             <h2>Equipos registrados</h2>
-                            <select id="equipmentAreaFilter" class="report-area-select">
-                                <option value="">Todas las áreas</option>
-                            </select>
+                            <div class="equipment-filters">
+                                <select id="equipmentAreaFilter" class="report-area-select">
+                                    <option value="">Todas las áreas</option>
+                                </select>
+                                <select id="equipmentTypeFilter" class="report-area-select">
+                                    <option value="">Todos los tipos</option>
+                                    <option value="general">General</option>
+                                    <option value="critical">Crítico</option>
+                                </select>
+                            </div>
                         </div>
                         <div class="equipment-table-wrap">
                             <table class="data-table">

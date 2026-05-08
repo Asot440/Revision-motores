@@ -296,10 +296,17 @@ function renderEquipment(equipment) {
     equipmentCache = equipment;
     const tableBody = document.getElementById('equipmentTableBody');
     const areaFilter = document.getElementById('equipmentAreaFilter');
+    const typeFilter = document.getElementById('equipmentTypeFilter');
     const selectedArea = areaFilter?.value || '';
-    const visibleEquipment = selectedArea
-        ? equipment.filter((item) => item.area === selectedArea)
-        : equipment;
+    const selectedType = typeFilter?.value || '';
+    const visibleEquipment = equipment.filter((item) => (
+        (!selectedArea || item.area === selectedArea)
+        && (
+            !selectedType
+            || (selectedType === 'critical' && item.critical)
+            || (selectedType === 'general' && !item.critical)
+        )
+    ));
 
     if (tableBody) {
         tableBody.innerHTML = visibleEquipment.length
@@ -1026,6 +1033,9 @@ function initEquipmentDatabase(user) {
     }
 
     document.getElementById('equipmentAreaFilter')?.addEventListener('change', async () => {
+        renderEquipment(await loadEquipment());
+    });
+    document.getElementById('equipmentTypeFilter')?.addEventListener('change', async () => {
         renderEquipment(await loadEquipment());
     });
 
