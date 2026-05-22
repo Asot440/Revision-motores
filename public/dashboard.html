@@ -27,7 +27,7 @@
                         </svg>
                     </button>
                     <div class="dropdown-menu" id="userDropdown">
-                        <a href="#" class="dropdown-item logout" id="logoutBtn">Cerrar SesiÃ³n</a>
+                        <a href="#" class="dropdown-item logout" id="logoutBtn">Cerrar Sesión</a>
                     </div>
                 </div>
             </div>
@@ -56,7 +56,7 @@
                         <polyline points="2 12 12 17 22 12"></polyline>
                         <polyline points="2 17 12 22 22 17"></polyline>
                     </svg>
-                    <span>RevisiÃ³n de Equipo CrÃ­tico</span>
+                    <span>Revisión de Equipo Crítico</span>
                 </div>
 
                 <div class="nav-item" data-page="general">
@@ -67,7 +67,7 @@
                         <rect x="14" y="14" width="7" height="7"></rect>
                         <rect x="3" y="14" width="7" height="7"></rect>
                     </svg>
-                    <span>RevisiÃ³n de Equipo General</span>
+                    <span>Revisión de Equipo General</span>
                 </div>
 
                 <div class="nav-item" data-page="critical-query">
@@ -137,17 +137,17 @@
             <div class="page active" id="home-page">
                 <div class="page-header">
                     <h1>Bienvenido al Sistema de Monitoreo</h1>
-                    <p>Tablero de mantenimiento e inspecciÃ³n de equipos</p>
+                    <p>Tablero de mantenimiento e inspección de equipos</p>
                 </div>
 
                 <section class="home-overview-panel">
                     <div class="home-overview-copy">
                         <span class="home-overview-kicker">Resumen operativo</span>
-                        <h2>Estado general de inspecciÃ³n y mantenimiento</h2>
+                        <h2>Estado general de inspección y mantenimiento</h2>
                         <p>Consulta cobertura de revisiones, carga de reportes y prioridades por atender en un solo lugar.</p>
                     </div>
                     <div class="home-overview-meta">
-                        <span class="home-overview-label">Ãšltima actualizaciÃ³n</span>
+                        <span class="home-overview-label">Última actualización</span>
                         <strong id="homeDashboardUpdatedAt">Cargando...</strong>
                     </div>
                 </section>
@@ -184,117 +184,14 @@
                         <span class="stat-helper">Incidencias registradas</span>
                     </article>
                 </div>
-                    <article class="stat-card">
-                        <span class="stat-label">Reportes cerrados</span>
-                        <strong class="stat-value" id="homeStatClosedReports">-</strong>
-                        <span class="stat-helper">Atendidos en historial</span>
-                    </article>
-                    <article class="stat-card">
-                        <span class="stat-label">Sobrecargas detectadas</span>
-                        <strong class="stat-value" id="homeStatOverloaded">-</strong>
-                        <span class="stat-helper">Incidencias registradas</span>
-                    </article>
-                </div>
-
-                <div class="home-layout">
-                    <aside class="home-sidebar">
-                        <div class="card card-clickable home-card" data-action="critical">
-                            <div class="card-icon critical">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <path d="M12 2L22 20H2Z"></path>
-                                    <path d="M12 9v4"></path>
-                                    <path d="M12 17h.01"></path>
-                                </svg>
-                            </div>
-                            <h3>RevisiÃ³n de Equipo CrÃ­tico</h3>
-                            <p>Registro diario de equipos que detienen la operaci&oacute;n si fallan.</p>
-                            <div class="card-footer">
-                                <span class="card-action-label">Abrir revisi&oacute;n</span>
-                                <span class="arrow">&rarr;</span>
-                            </div>
-                        </div>
-
-                        <div class="card card-clickable home-card" data-action="general">
-                            <div class="card-icon general">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none"
-                                    stroke="currentColor" stroke-width="2">
-                                    <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
-                                    <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
-                                </svg>
-                            </div>
-                            <h3>RevisiÃ³n de Equipo General</h3>
-                            <p>Registro quincenal de equipos generales por &aacute;rea.</p>
-                            <div class="card-footer">
-                                <span class="card-action-label">Abrir revisi&oacute;n</span>
-                                <span class="arrow">&rarr;</span>
-                            </div>
-                        </div>
-                    </aside>
-
-                    <section class="home-main">
-                        <div class="home-insights-grid">
-                            <article class="reports-panel">
-                                <div class="reports-header">
-                                    <div>
-                                        <h2>Resumen por Ã¡rea</h2>
-                                        <p>Equipos, crÃƒÂ­ticos, revisiÃ³n de hoy y reportes abiertos.</p>
-                                    </div>
-                                </div>
-                                <div class="home-summary-list" id="homeAreaSummary"></div>
-                            </article>
-
-                            <article class="reports-panel">
-                                <div class="reports-header">
-                                    <div>
-                                        <h2>Hallazgos frecuentes</h2>
-                                        <p>Comportamiento acumulado de las inspecciones registradas.</p>
-                                    </div>
-                                </div>
-                                <div class="home-finding-list" id="homeFindingSummary"></div>
-                            </article>
-                        </div>
-
-                        <article class="reports-panel">
-                            <div class="reports-header">
-                                <div>
-                                    <h2>Prioridades de mantenimiento</h2>
-                                    <p>Equipos con mayor urgencia por criticidad, sobrecarga o reincidencia.</p>
-                                </div>
-                            </div>
-                            <div class="report-list" id="homePriorityList"></div>
-                        </article>
-                    </section>
-
-                    <section class="home-reports">
-                        <div class="reports-panel">
-                            <div class="reports-header">
-                                <div>
-                                    <h2>Reportes</h2>
-                                    <p>Hallazgos pendientes de atenci&oacute;n.</p>
-                                </div>
-                                <div class="report-filter-group">
-                                    <label for="reportAreaSelect">&Aacute;rea</label>
-                                    <select id="reportAreaSelect" class="report-area-select">
-                                        <option value="">Todas</option>
-                                        <option>Central de pastas</option>
-                                        <option>M&aacute;quina no. 2</option>
-                                        <option>M&aacute;quina no. 3</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <div class="report-list" id="followUpReportList"></div>
-                        </div>
-                    </section>
-                </div>
+                <div class="home-layout"></div>
             </div>
 
             <!-- Page: Critical -->
             <div class="page" id="critical-page">
                 <div class="page-header">
-                    <h1>RevisiÃ³n de Equipo CrÃ­tico</h1>
-                    <p>Recorrido diario de equipos que detienen la mÃ¡quina si fallan</p>
+                    <h1>Revisión de Equipo Crítico</h1>
+                    <p>Recorrido diario de equipos que detienen la máquina si fallan</p>
                 </div>
 
                 <div class="equipment-db-layout single-column">
@@ -321,20 +218,20 @@
                         </div>
                         <form id="criticalReadingForm" class="daily-reading-form">
                             <select id="criticalReadingArea" required>
-                                <option value="">Ãrea</option>
+                                <option value="">Área</option>
                                 <option>Central de pastas</option>
-                                <option>MÃ¡quina no. 2</option>
-                                <option>MÃ¡quina no. 3</option>
+                                <option>Máquina no. 2</option>
+                                <option>Máquina no. 3</option>
                             </select>
                             <select id="criticalReadingEquipment" required></select>
                             <label class="inline-check">
                                 <input type="checkbox" id="criticalReadingStopped">
                                 <span>Equipo parado</span>
                             </label>
-                            <input type="number" id="criticalReadingTemperature" placeholder="Temperatura Â°C" step="0.1" required>
+                            <input type="number" id="criticalReadingTemperature" placeholder="Temperatura °C" step="0.1" required>
                             <label class="inline-check">
                                 <input type="checkbox" id="criticalReadingVibration">
-                                <span>VibraciÃ³n</span>
+                                <span>Vibración</span>
                             </label>
                             <label class="inline-check">
                                 <input type="checkbox" id="criticalReadingNoise">
@@ -351,7 +248,7 @@
 
                     <section class="equipment-panel equipment-panel-wide">
                         <div class="panel-header">
-                            <h2>ÃƒÆ’Ã…Â¡ltimos registros crÃƒÂ­ticos</h2>
+                            <h2>Últimos registros críticos</h2>
                         </div>
                         <div class="equipment-table-wrap">
                             <table class="data-table">
@@ -377,7 +274,7 @@
             <div class="page" id="equipment-page">
                 <div class="page-header">
                     <h1>Equipos</h1>
-                    <p>CatÃ¡logo de equipos registrados por Ã¡rea</p>
+                    <p>Catálogo de equipos registrados por área</p>
                 </div>
 
                 <div class="equipment-db-layout">
@@ -390,22 +287,22 @@
                             <input type="text" id="equipmentKey" placeholder="Clave del equipo" required>
                             <input type="text" id="equipmentName" placeholder="Nombre del equipo" required>
                             <select id="equipmentArea" required>
-                                <option value="">Ãrea</option>
+                                <option value="">Área</option>
                                 <option>Central de pastas</option>
-                                <option>MÃ¡quina no. 2</option>
-                                <option>MÃ¡quina no. 3</option>
+                                <option>Máquina no. 2</option>
+                                <option>Máquina no. 3</option>
                             </select>
                             <input type="number" id="equipmentNominalCurrent" placeholder="Corriente nominal A" step="0.1" min="0">
                             <label class="inline-check">
                                 <input type="checkbox" id="equipmentCritical">
-                                <span>CrÃ­tico</span>
+                                <span>Crítico</span>
                             </label>
                             <label class="inline-check">
                                 <input type="checkbox" id="equipmentActive" checked>
                                 <span>Activo</span>
                             </label>
                             <button type="submit" class="btn btn-primary" id="equipmentSubmitBtn">Guardar equipo</button>
-                            <button type="button" class="btn btn-secondary" id="equipmentCancelBtn">Cancelar ediciÃƒÆ’Ã‚Â³n</button>
+                            <button type="button" class="btn btn-secondary" id="equipmentCancelBtn">Cancelar edición</button>
                         </form>
                     </section>
 
@@ -414,12 +311,12 @@
                             <h2>Equipos registrados</h2>
                             <div class="equipment-filters">
                                 <select id="equipmentAreaFilter" class="report-area-select">
-                                    <option value="">Todas las Ã¡reas</option>
+                                    <option value="">Todas las áreas</option>
                                 </select>
                                 <select id="equipmentTypeFilter" class="report-area-select">
                                     <option value="">Todos los tipos</option>
                                     <option value="general">General</option>
-                                    <option value="critical">CrÃ­tico</option>
+                                    <option value="critical">Crítico</option>
                                 </select>
                             </div>
                         </div>
@@ -429,7 +326,7 @@
                                     <tr>
                                         <th>Clave</th>
                                         <th>Equipo</th>
-                                        <th>Ãrea</th>
+                                        <th>Área</th>
                                         <th>Corriente nominal</th>
                                         <th>Tipo</th>
                                         <th>Estado</th>
@@ -446,7 +343,7 @@
             <!-- Page: General -->
             <div class="page" id="general-page">
                 <div class="page-header">
-                    <h1>RevisiÃ³n de Equipo General</h1>
+                    <h1>Revisión de Equipo General</h1>
                     <p>Recorrido quincenal para equipos generales de planta</p>
                 </div>
 
@@ -474,20 +371,20 @@
                         </div>
                         <form id="dailyReadingForm" class="daily-reading-form">
                             <select id="readingArea" required>
-                                <option value="">Ãrea</option>
+                                <option value="">Área</option>
                                 <option>Central de pastas</option>
-                                <option>MÃ¡quina no. 2</option>
-                                <option>MÃ¡quina no. 3</option>
+                                <option>Máquina no. 2</option>
+                                <option>Máquina no. 3</option>
                             </select>
                             <select id="readingEquipment" required></select>
                             <label class="inline-check">
                                 <input type="checkbox" id="readingStopped">
                                 <span>Equipo parado</span>
                             </label>
-                            <input type="number" id="readingTemperature" placeholder="Temperatura Â°C" step="0.1" required>
+                            <input type="number" id="readingTemperature" placeholder="Temperatura °C" step="0.1" required>
                             <label class="inline-check">
                                 <input type="checkbox" id="readingVibration">
-                                <span>VibraciÃ³n</span>
+                                <span>Vibración</span>
                             </label>
                             <label class="inline-check">
                                 <input type="checkbox" id="readingNoise">
@@ -504,7 +401,7 @@
 
                     <section class="equipment-panel equipment-panel-wide">
                         <div class="panel-header">
-                            <h2>ÃƒÆ’Ã…Â¡ltimos registros</h2>
+                            <h2>Últimos registros</h2>
                         </div>
                         <div class="equipment-table-wrap">
                             <table class="data-table">
@@ -643,10 +540,10 @@
                         <form id="userForm" class="user-form">
                             <input type="hidden" id="userId">
                             <input type="text" id="userUsername" placeholder="Usuario" required>
-                            <input type="password" id="userPassword" placeholder="ContraseÃ±a">
+                            <input type="password" id="userPassword" placeholder="Contraseña">
                             <select id="userRole" required>
                                 <option value="viewer">Visualizador</option>
-                                <option value="technician">TÃ©cnico</option>
+                                <option value="technician">Técnico</option>
                                 <option value="supervisor">Supervisor</option>
                                 <option value="admin">Administrador</option>
                             </select>
@@ -660,7 +557,7 @@
                                 <div class="permissions-grid" id="userPermissions"></div>
                             </div>
                             <button type="submit" class="btn btn-primary" id="userSubmitBtn">Guardar usuario</button>
-                            <button type="button" class="btn btn-secondary" id="userCancelBtn">Cancelar ediciÃƒÆ’Ã‚Â³n</button>
+                            <button type="button" class="btn btn-secondary" id="userCancelBtn">Cancelar edición</button>
                         </form>
                     </section>
 

@@ -24,7 +24,7 @@
         const result = await response.json();
 
         if (!response.ok) {
-            throw new Error(result.message || 'Error en la peticiÃƒÆ’Ã‚Â³n');
+            throw new Error(result.message || 'Error en la petición');
         }
 
         return result;
@@ -72,14 +72,14 @@ function getCurrentUser() {
 
 let printTemplate = {
     companyName: 'EMPAQUES MODERNOS SAN PABLO S. DE R.L. DE C.V.',
-    criticalTitle: 'REVISIÃ“N DE EQUIPO ELÃ‰CTRICO CRÃTICO',
-    generalTitle: 'REVISIÃ“N DE EQUIPO ELÃ‰CTRICO GENERAL',
+    criticalTitle: 'REVISIÓN DE EQUIPO ELÉCTRICO CRÍTICO',
+    generalTitle: 'REVISIÓN DE EQUIPO ELÉCTRICO GENERAL',
     logoSrc: 'img/print-logo.jpg',
     footer: {
         code: 'F-01-MIF-S-42',
-        version: 'VersiÃƒÆ’Ã‚Â³n: 0',
-        edition: 'EdiciÃƒÆ’Ã‚Â³n: 1',
-        page: 'PÃƒÆ’Ã‚Â¡gina 1'
+        version: 'Versión: 0',
+        edition: 'Edición: 1',
+        page: 'Página 1'
     }
 };
 
@@ -142,7 +142,7 @@ function initLogin() {
                 window.location.href = '/dashboard.html';
             }, 700);
         } catch (error) {
-            showAlert(error.message || 'Usuario o contraseÃƒÆ’Ã‚Â±a incorrectos', 'error');
+            showAlert(error.message || 'Usuario o contraseña incorrectos', 'error');
         }
     });
 }
@@ -268,7 +268,7 @@ function renderEquipmentOptions(selectId, equipment, critical, area = '') {
         ? available.map((item) => `
             <option value="${item.id}">${escapeHtml(item.equipment_key)} - ${escapeHtml(item.name)}</option>
         `).join('')
-        : '<option value="">Sin equipos para esta Ã¡rea</option>';
+        : '<option value="">Sin equipos para esta área</option>';
 }
 
 function refreshReviewEquipmentOptions() {
@@ -322,7 +322,7 @@ function renderEquipment(equipment) {
                     <td>${escapeHtml(item.name)}</td>
                     <td>${escapeHtml(item.area || '-')}</td>
                     <td>${item.nominal_current ?? '-'} A</td>
-                    <td>${item.critical ? 'CrÃ­tico' : 'General'}</td>
+                    <td>${item.critical ? 'Crítico' : 'General'}</td>
                     <td>${item.active ? 'Activo' : 'Inactivo'}</td>
                     <td>
                         <button class="btn-table-action" type="button" data-edit-equipment="${item.id}">
@@ -342,7 +342,7 @@ function renderEquipment(equipment) {
     if (areaFilter) {
         const areas = [...new Set(equipment.map((item) => item.area).filter(Boolean))].sort();
         areaFilter.innerHTML = `
-            <option value="">Todas las Ã¡reas</option>
+            <option value="">Todas las áreas</option>
             ${areas.map((area) => `
                 <option value="${escapeHtml(area)}"${area === selectedArea ? ' selected' : ''}>${escapeHtml(area)}</option>
             `).join('')}
@@ -369,7 +369,7 @@ function renderEquipment(equipment) {
                 return;
             }
 
-            const confirmed = window.confirm(`Ãƒâ€šÂ¿Eliminar el equipo ${item.equipment_key} - ${item.name}?`);
+            const confirmed = window.confirm(`¿Eliminar el equipo ${item.equipment_key} - ${item.name}?`);
 
             if (!confirmed) {
                 return;
@@ -390,11 +390,11 @@ function renderReadingsTable(tableBody, readings, emptyMessage) {
     tableBody.innerHTML = readings.length
         ? readings.map((item) => {
             const findings = [
-                item.current === null || item.current === undefined ? 'Pendiente subestaciÃƒÆ’Ã‚Â³n' : '',
-                !item.equipment_stopped && (item.temperature === null || item.temperature === undefined) ? 'Pendiente revisiÃ³n fÃƒÆ’Ã‚Â­sica' : '',
+                item.current === null || item.current === undefined ? 'Pendiente subestación' : '',
+                !item.equipment_stopped && (item.temperature === null || item.temperature === undefined) ? 'Pendiente revisión física' : '',
                 item.equipment_stopped ? 'Equipo parado' : '',
                 item.overloaded ? 'Sobrecargado' : '',
-                item.vibration ? 'VibraciÃ³n' : '',
+                item.vibration ? 'Vibración' : '',
                 item.noise ? 'Ruido' : '',
                 item.cleaning_required ? 'Limpieza' : ''
             ].filter(Boolean).join(', ') || '-';
@@ -402,7 +402,7 @@ function renderReadingsTable(tableBody, readings, emptyMessage) {
                 ? '-'
                 : item.temperature === null || item.temperature === undefined
                     ? 'Pendiente'
-                    : `${escapeHtml(item.temperature)} Ãƒâ€šÂ°C`;
+                    : `${escapeHtml(item.temperature)} °C`;
             const current = item.current === null || item.current === undefined
                 ? 'Pendiente'
                 : `${escapeHtml(item.current)} A`;
@@ -436,7 +436,7 @@ async function loadReadings(critical) {
         renderReadingsTable(
             tableBody,
             readings,
-            critical ? 'Sin registros crÃƒÂ­ticos' : 'Sin registros generales'
+            critical ? 'Sin registros críticos' : 'Sin registros generales'
         );
     } catch (error) {
         tableBody.innerHTML = '<tr><td class="empty-row" colspan="7">No tienes permiso para ver registros</td></tr>';
@@ -454,11 +454,11 @@ function renderReviewQueryTable(tableBody, readings, emptyMessage) {
     tableBody.innerHTML = readings.length
         ? readings.map((item) => {
             const findings = [
-                item.current === null || item.current === undefined ? 'Pendiente subestaciÃƒÆ’Ã‚Â³n' : '',
-                !item.equipment_stopped && (item.temperature === null || item.temperature === undefined) ? 'Pendiente revisiÃ³n fÃƒÆ’Ã‚Â­sica' : '',
+                item.current === null || item.current === undefined ? 'Pendiente subestación' : '',
+                !item.equipment_stopped && (item.temperature === null || item.temperature === undefined) ? 'Pendiente revisión física' : '',
                 item.equipment_stopped ? 'Equipo parado' : '',
                 item.overloaded ? 'Sobrecargado' : '',
-                item.vibration ? 'VibraciÃ³n' : '',
+                item.vibration ? 'Vibración' : '',
                 item.noise ? 'Ruido' : '',
                 item.cleaning_required ? 'Limpieza' : ''
             ].filter(Boolean).join(', ') || '-';
@@ -518,10 +518,10 @@ async function loadReviewQuery(critical) {
         renderReviewQueryTable(
             tableBody,
             readings,
-            critical ? 'Sin revisiÃ³n crÃƒÆ’Ã‚Â­tica para este dÃƒÆ’Ã‚Â­a' : 'Sin revisiÃ³n general para este dÃƒÆ’Ã‚Â­a'
+            critical ? 'Sin revisión crítica para este día' : 'Sin revisión general para este día'
         );
     } catch (error) {
-        tableBody.innerHTML = '<tr><td class="empty-row" colspan="9">No se pudo cargar la revisiÃ³n</td></tr>';
+        tableBody.innerHTML = '<tr><td class="empty-row" colspan="9">No se pudo cargar la revisión</td></tr>';
     }
 }
 
@@ -552,7 +552,7 @@ function formatRelativeDate(dateValue) {
         return 'Ayer';
     }
 
-    return `Hace ${diffDays} dÃƒÆ’Ã‚Â­as`;
+    return `Hace ${diffDays} días`;
 }
 
 function formatRecordDate(dateValue) {
@@ -626,8 +626,8 @@ function setupHomeDashboardLayout() {
                 <article class="reports-panel">
                     <div class="reports-header">
                         <div>
-                            <h2>Cobertura de inspecciÃ³n</h2>
-                            <p>Avance del dÃ­a por criticidad y total de equipos revisados.</p>
+                            <h2>Cobertura de inspección</h2>
+                            <p>Avance del día por criticidad y total de equipos revisados.</p>
                         </div>
                     </div>
                     <div class="home-coverage-chart" id="homeCoverageChart"></div>
@@ -636,8 +636,8 @@ function setupHomeDashboardLayout() {
                 <article class="reports-panel">
                     <div class="reports-header">
                         <div>
-                            <h2>Carga por Ã¡rea</h2>
-                            <p>Comparativo simple de equipos y reportes abiertos por Ã¡rea.</p>
+                            <h2>Carga por área</h2>
+                            <p>Comparativo simple de equipos y reportes abiertos por área.</p>
                         </div>
                     </div>
                     <div class="home-bar-chart" id="homeAreaChart"></div>
@@ -648,7 +648,7 @@ function setupHomeDashboardLayout() {
                 <div class="reports-header">
                     <div>
                         <h2>Control de periodicidad</h2>
-                        <p>Seguimiento operativo segÃºn la frecuencia real de inspecciÃ³n.</p>
+                        <p>Seguimiento operativo según la frecuencia real de inspección.</p>
                     </div>
                 </div>
                 <div class="home-cycle-grid" id="homeCycleSummary"></div>
@@ -668,8 +668,8 @@ function setupHomeDashboardLayout() {
                 <article class="reports-panel">
                     <div class="reports-header">
                         <div>
-                            <h2>Resumen por Ã¡rea</h2>
-                            <p>Equipos, crÃ­ticos, revisiÃ³n de hoy y reportes abiertos.</p>
+                            <h2>Resumen por área</h2>
+                            <p>Equipos, críticos, revisión de hoy y reportes abiertos.</p>
                         </div>
                     </div>
                     <div class="home-summary-list" id="homeAreaSummary"></div>
@@ -681,12 +681,12 @@ function setupHomeDashboardLayout() {
             <div class="reports-panel">
                 <div class="reports-header">
                     <div>
-                        <h2>Cola de atenciÃ³n</h2>
+                        <h2>Cola de atención</h2>
                         <p>Hallazgos abiertos que requieren mantenimiento o seguimiento.</p>
                     </div>
                     <div class="home-action-badges">
                         <span class="report-flag report-flag-overload">Sobrecarga</span>
-                        <span class="report-flag report-flag-vibration">VibraciÃ³n</span>
+                        <span class="report-flag report-flag-vibration">Vibración</span>
                         <span class="report-flag report-flag-comment">Seguimiento</span>
                     </div>
                 </div>
@@ -707,7 +707,7 @@ function renderHomeAreaSummary(areaSummary) {
     }
 
     if (!areaSummary.length) {
-        container.innerHTML = '<div class="home-empty-state">No hay Ã¡reas con informaciÃ³n disponible.</div>';
+        container.innerHTML = '<div class="home-empty-state">No hay áreas con información disponible.</div>';
         return;
     }
 
@@ -719,8 +719,8 @@ function renderHomeAreaSummary(areaSummary) {
             </div>
             <div class="home-summary-metrics">
                 <span>Equipos: ${item.totalEquipment}</span>
-                <span>CrÃ­ticos: ${item.criticalEquipment}</span>
-                <span>CrÃ­ticos hoy: ${item.criticalReviewedToday}/${item.criticalEquipment}</span>
+                <span>Críticos: ${item.criticalEquipment}</span>
+                <span>Críticos hoy: ${item.criticalReviewedToday}/${item.criticalEquipment}</span>
                 <span>Generales mes: ${item.generalReviewedMonth}/${item.generalEquipment}</span>
             </div>
         </article>
@@ -735,7 +735,7 @@ function renderHomeFindingSummary(findingSummary) {
     }
 
     if (!findingSummary.length) {
-        container.innerHTML = '<div class="home-empty-state">AÃºn no hay hallazgos registrados.</div>';
+        container.innerHTML = '<div class="home-empty-state">Aún no hay hallazgos registrados.</div>';
         return;
     }
 
@@ -767,12 +767,12 @@ function renderHomeCycleSummary(summary) {
     container.innerHTML = `
         <article class="home-cycle-card">
             <div class="home-cycle-header">
-                <strong>CrÃ­ticos de hoy</strong>
+                <strong>Críticos de hoy</strong>
                 <span>${summary.coverage.criticalPendingToday} pendientes</span>
             </div>
-            <p>La revisiÃ³n crÃ­tica debe completarse diariamente.</p>
+            <p>La revisión crítica debe completarse diariamente.</p>
             <ul class="home-cycle-list">
-                ${criticalItems || '<li>Sin pendientes crÃ­ticos hoy.</li>'}
+                ${criticalItems || '<li>Sin pendientes críticos hoy.</li>'}
             </ul>
         </article>
         <article class="home-cycle-card">
@@ -780,7 +780,7 @@ function renderHomeCycleSummary(summary) {
                 <strong>Generales del mes</strong>
                 <span>${summary.coverage.generalPendingMonth} pendientes</span>
             </div>
-            <p>La revisiÃ³n general debe completarse una vez por mes.</p>
+            <p>La revisión general debe completarse una vez por mes.</p>
             <ul class="home-cycle-list">
                 ${generalItems || '<li>Sin pendientes generales este mes.</li>'}
             </ul>
@@ -822,7 +822,7 @@ function renderHomeAreaChart(items) {
     }
 
     if (!items.length) {
-        container.innerHTML = '<div class="home-empty-state">No hay datos por Ã¡rea para mostrar.</div>';
+        container.innerHTML = '<div class="home-empty-state">No hay datos por área para mostrar.</div>';
         return;
     }
 
@@ -833,7 +833,7 @@ function renderHomeAreaChart(items) {
         <article class="home-area-bar-card">
             <div class="home-chart-labels">
                 <strong>${escapeHtml(item.area)}</strong>
-                <span>${item.totalEquipment} equipos Â· ${item.openReports} abiertos</span>
+                <span>${item.totalEquipment} equipos · ${item.openReports} abiertos</span>
             </div>
             <div class="home-bar-stack">
                 <div class="home-bar-line">
@@ -880,7 +880,7 @@ function renderHomePriorityList(reports) {
                 <div class="report-card-top">
                     <div>
                         <span class="report-title">${escapeHtml(item.equipment_key)} - ${escapeHtml(item.equipment_name)}</span>
-                        <span class="report-area-label">${item.critical ? 'CrÃ­tico' : 'General'} Â· Ãrea: ${escapeHtml(item.area || '-')}</span>
+                        <span class="report-area-label">${item.critical ? 'Crítico' : 'General'} · Área: ${escapeHtml(item.area || '-')}</span>
                     </div>
                     <span class="report-days">${escapeHtml(formatRelativeDate(item.date))}</span>
                 </div>
@@ -920,8 +920,8 @@ async function loadHomeDashboard() {
                 count: reports.filter((item) => item.overloaded).length
             },
             {
-                label: 'VibraciÃ³n',
-                caption: 'Inspecciones con vibraciÃƒÂ³n detectada',
+                label: 'Vibración',
+                caption: 'Inspecciones con vibración detectada',
                 count: reports.filter((item) => item.vibration).length
             },
             {
@@ -1119,7 +1119,7 @@ function renderPrintTemplate() {
                 </div>
                 <div class="print-title-cell">
                     <span class="print-title-text">${escapeHtml(title || printTemplate.defaultTitle || '')}</span>
-                    <span class="print-area-text">Ãrea: ${escapeHtml(getPrintReviewArea(type))}</span>
+                    <span class="print-area-text">Área: ${escapeHtml(getPrintReviewArea(type))}</span>
                 </div>
                 <div class="print-meta-cell">
                     <span>FECHA:</span>
@@ -1141,7 +1141,7 @@ function renderPrintTemplate() {
 function getReportFindings(item, includeStopped = false) {
     return [
         includeStopped && item.equipment_stopped ? { label: 'Equipo parado', className: 'report-flag-stopped' } : null,
-        item.vibration ? { label: 'VibraciÃ³n', className: 'report-flag-vibration' } : null,
+        item.vibration ? { label: 'Vibración', className: 'report-flag-vibration' } : null,
         item.noise ? { label: 'Ruido', className: 'report-flag-noise' } : null,
         item.overloaded ? { label: 'Sobrecargado', className: 'report-flag-overload' } : null,
         item.cleaning_required ? { label: 'Limpieza', className: 'report-flag-dirt' } : null,
@@ -1155,7 +1155,7 @@ function hasClosableFinding(item) {
 
 async function saveReportAction(reportId, currentAction = '') {
     const actionTaken = window.prompt(
-        'Describe la acciÃƒÂ³n realizada para atender el hallazgo:',
+        'Describe la acción realizada para atender el hallazgo:',
         currentAction
     );
 
@@ -1164,7 +1164,7 @@ async function saveReportAction(reportId, currentAction = '') {
     }
 
     if (!actionTaken.trim()) {
-        showAlert('La acciÃƒÂ³n realizada es obligatoria', 'error');
+        showAlert('La acción realizada es obligatoria', 'error');
         return;
     }
 
@@ -1174,9 +1174,9 @@ async function saveReportAction(reportId, currentAction = '') {
         });
         await loadFollowUpReports();
         await loadReports();
-        showAlert('AcciÃƒÆ’Ã‚Â³n guardada', 'success');
+        showAlert('Acción guardada', 'success');
     } catch (error) {
-        showAlert(error.message || 'No se pudo guardar la acciÃƒÆ’Ã‚Â³n', 'error');
+        showAlert(error.message || 'No se pudo guardar la acción', 'error');
     }
 }
 
@@ -1234,7 +1234,7 @@ function renderReportsTable(reports) {
             `
             : hasClosableFinding(item)
                 ? `<button class="btn-table-action" type="button" data-close-report="${item.id}">Atender</button>`
-                : '<span class="muted-text">Sin acciÃƒÆ’Ã‚Â³n pendiente</span>';
+                : '<span class="muted-text">Sin acción pendiente</span>';
 
         return `
             <tr>
@@ -1303,14 +1303,14 @@ function renderFollowUpReports(reports) {
                 <div class="report-card-top">
                     <div>
                         <span class="report-title">${escapeHtml(item.equipment_key)} - ${escapeHtml(item.equipment_name)}</span>
-                        <span class="report-area-label">Ãrea: ${escapeHtml(item.area || '-')}</span>
+                        <span class="report-area-label">Área: ${escapeHtml(item.area || '-')}</span>
                     </div>
                     <span class="report-days">${escapeHtml(formatRelativeDate(item.date))}</span>
                 </div>
                 <p class="report-desc">
                     ${item.equipment_stopped
                         ? 'Equipo parado, sin valores registrados'
-                        : `Temperatura: ${escapeHtml(item.temperature)} Ãƒâ€šÂ°C Â· Corriente: ${escapeHtml(item.current)} A${item.nominal_current ? ` Â· Nominal: ${escapeHtml(item.nominal_current)} A` : ''}`}
+                        : `Temperatura: ${escapeHtml(item.temperature)} °C · Corriente: ${escapeHtml(item.current)} A${item.nominal_current ? ` · Nominal: ${escapeHtml(item.nominal_current)} A` : ''}`}
                     ${comments ? `<br>Comentarios: ${escapeHtml(comments)}` : ''}
                 </p>
                 <div class="report-flags">
@@ -1397,7 +1397,7 @@ function resetUserForm() {
     document.getElementById('userId').value = '';
     document.getElementById('userRole').value = 'viewer';
     document.getElementById('userPassword').required = true;
-    document.getElementById('userPassword').placeholder = 'ContraseÃ±a';
+    document.getElementById('userPassword').placeholder = 'Contraseña';
     document.getElementById('userSubmitBtn').textContent = 'Guardar usuario';
     document.getElementById('userCancelBtn').style.display = 'none';
     setSelectedUserPermissions(ROLE_PERMISSIONS.viewer);
@@ -1408,7 +1408,7 @@ function setUserFormMode(user) {
     document.getElementById('userUsername').value = user.username || '';
     document.getElementById('userPassword').value = '';
     document.getElementById('userPassword').required = false;
-    document.getElementById('userPassword').placeholder = 'Nueva contraseÃƒÆ’Ã‚Â±a (opcional)';
+    document.getElementById('userPassword').placeholder = 'Nueva contraseña (opcional)';
     document.getElementById('userRole').value = user.role || 'viewer';
     document.getElementById('userSubmitBtn').textContent = 'Actualizar usuario';
     document.getElementById('userCancelBtn').style.display = 'inline-block';
@@ -1657,7 +1657,7 @@ function setupReadingForm(config) {
             const equipmentId = document.getElementById(config.equipmentId).value;
 
             if (!equipmentId) {
-                showAlert('Selecciona un equipo del Ã¡rea indicada', 'error');
+                showAlert('Selecciona un equipo del área indicada', 'error');
                 return;
             }
 
@@ -1683,9 +1683,9 @@ function setupReadingForm(config) {
             await loadReviewQuery(true);
             await loadReviewQuery(false);
             showPage(config.page);
-            showAlert('RevisiÃƒÆ’Ã‚Â³n fÃƒÆ’Ã‚Â­sica guardada', 'success');
+            showAlert('Revisión física guardada', 'success');
         } catch (error) {
-            showAlert(error.message || 'Error al guardar revisiÃ³n fÃƒÆ’Ã‚Â­sica', 'error');
+            showAlert(error.message || 'Error al guardar revisión física', 'error');
         }
     });
 }
@@ -1703,7 +1703,7 @@ function setupCurrentForm(config) {
         const equipmentId = document.getElementById(config.equipmentId).value;
 
         if (!equipmentId) {
-            showAlert('Selecciona un equipo del Ã¡rea indicada', 'error');
+            showAlert('Selecciona un equipo del área indicada', 'error');
             return;
         }
 
