@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcrypt');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 
 const app = express();
 const db = new sqlite3.Database(path.join(__dirname, 'database.db'));
@@ -38,6 +40,12 @@ const ROLE_PERMISSIONS = {
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/img', express.static(path.join(__dirname, 'img')));
 app.use(express.json());
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec, {
+    customSiteTitle: 'API Docs - Sistema de Monitoreo'
+}));
+app.get('/api-docs.json', (req, res) => {
+    res.json(swaggerSpec);
+});
 
 function dbRun(sql, params = []) {
     return new Promise((resolve, reject) => {
@@ -774,6 +782,161 @@ app.get('/api/follow-up-reports', async (req, res) => {
     }
 });
 
+app.get('/api/dashboard-summary', async (req, res) => {
+    try {
+        const requester = await requirePermission(req, res, 'reports:read');
+
+        if (!requester) {
+            return;
+        }
+
+        const today = getLocalDateTime().slice(0, 10);
+        const monthKey = today.slice(0, 7);
+        const openFindingsCondition = `
+            (
+                inspection_details.vibration = 1
+                OR inspection_details.noise = 1
+                OR (
+                    COALESCE(inspection_details.equipment_stopped, 0) = 0
+                    AND motors.nominal_current IS NOT NULL
+                    AND inspection_details.current > motors.nominal_current
+                )
+                OR COALESCE(inspection_details.cleaning_required, inspection_details.dirty, 0) = 1
+                OR TRIM(COALESCE(inspection_details.comments, '')) <> ''
+            )
+            AND COALESCE(inspection_details.finding_closed, 0) = 0
+        `;
+
+        const [totalsRow, criticalCoverageRow, generalCoverageRow, areaRows, pendingCriticalRows, pendingGeneralRows] = await Promise.all([
+            dbGet(`
+                SELECT
+                    COUNT(*) AS active_equipment,
+                    SUM(CASE WHEN critical = 1 THEN 1 ELSE 0 END) AS critical_equipment,
+                    SUM(CASE WHEN critical = 0 THEN 1 ELSE 0 END) AS general_equipment
+                FROM motors
+                WHERE active = 1
+            `),
+            dbGet(`
+                SELECT COUNT(DISTINCT inspection_details.motor_id) AS reviewed_today
+                FROM inspection_details
+                INNER JOIN inspections ON inspections.id = inspection_details.inspection_id
+                INNER JOIN motors ON motors.id = inspection_details.motor_id
+                WHERE motors.active = 1
+                  AND motors.critical = 1
+                  AND DATE(inspections.date) = ?
+            `, [today]),
+            dbGet(`
+                SELECT COUNT(DISTINCT inspection_details.motor_id) AS reviewed_month
+                FROM inspection_details
+                INNER JOIN inspections ON inspections.id = inspection_details.inspection_id
+                INNER JOIN motors ON motors.id = inspection_details.motor_id
+                WHERE motors.active = 1
+                  AND motors.critical = 0
+                  AND SUBSTR(inspections.date, 1, 7) = ?
+            `, [monthKey]),
+            dbAll(`
+                SELECT
+                    motors.area,
+                    COUNT(*) AS total_equipment,
+                    SUM(CASE WHEN motors.critical = 1 THEN 1 ELSE 0 END) AS critical_equipment,
+                    SUM(CASE WHEN motors.critical = 0 THEN 1 ELSE 0 END) AS general_equipment,
+                    SUM(CASE WHEN motors.critical = 1 AND EXISTS (
+                        SELECT 1
+                        FROM inspection_details
+                        INNER JOIN inspections ON inspections.id = inspection_details.inspection_id
+                        WHERE inspection_details.motor_id = motors.id
+                          AND DATE(inspections.date) = ?
+                    ) THEN 1 ELSE 0 END) AS critical_reviewed_today,
+                    SUM(CASE WHEN motors.critical = 0 AND EXISTS (
+                        SELECT 1
+                        FROM inspection_details
+                        INNER JOIN inspections ON inspections.id = inspection_details.inspection_id
+                        WHERE inspection_details.motor_id = motors.id
+                          AND SUBSTR(inspections.date, 1, 7) = ?
+                    ) THEN 1 ELSE 0 END) AS general_reviewed_month,
+                    SUM(CASE WHEN EXISTS (
+                        SELECT 1
+                        FROM inspection_details
+                        INNER JOIN inspections ON inspections.id = inspection_details.inspection_id
+                        WHERE inspection_details.motor_id = motors.id
+                          AND ${openFindingsCondition}
+                    ) THEN 1 ELSE 0 END) AS open_reports
+                FROM motors
+                WHERE motors.active = 1
+                GROUP BY motors.area
+                ORDER BY motors.area
+            `, [today, monthKey]),
+            dbAll(`
+                SELECT motors.equipment_key, motors.name AS equipment_name, motors.area
+                FROM motors
+                WHERE motors.active = 1
+                  AND motors.critical = 1
+                  AND NOT EXISTS (
+                    SELECT 1
+                    FROM inspection_details
+                    INNER JOIN inspections ON inspections.id = inspection_details.inspection_id
+                    WHERE inspection_details.motor_id = motors.id
+                      AND DATE(inspections.date) = ?
+                  )
+                ORDER BY motors.area, motors.equipment_key
+                LIMIT 6
+            `, [today]),
+            dbAll(`
+                SELECT motors.equipment_key, motors.name AS equipment_name, motors.area
+                FROM motors
+                WHERE motors.active = 1
+                  AND motors.critical = 0
+                  AND NOT EXISTS (
+                    SELECT 1
+                    FROM inspection_details
+                    INNER JOIN inspections ON inspections.id = inspection_details.inspection_id
+                    WHERE inspection_details.motor_id = motors.id
+                      AND SUBSTR(inspections.date, 1, 7) = ?
+                  )
+                ORDER BY motors.area, motors.equipment_key
+                LIMIT 6
+            `, [monthKey])
+        ]);
+
+        const activeEquipment = Number(totalsRow?.active_equipment || 0);
+        const criticalEquipment = Number(totalsRow?.critical_equipment || 0);
+        const generalEquipment = Number(totalsRow?.general_equipment || 0);
+        const criticalReviewedToday = Number(criticalCoverageRow?.reviewed_today || 0);
+        const generalReviewedMonth = Number(generalCoverageRow?.reviewed_month || 0);
+
+        res.json({
+            today,
+            month: monthKey,
+            totals: {
+                activeEquipment,
+                criticalEquipment,
+                generalEquipment
+            },
+            coverage: {
+                criticalReviewedToday,
+                criticalPendingToday: Math.max(criticalEquipment - criticalReviewedToday, 0),
+                generalReviewedMonth,
+                generalPendingMonth: Math.max(generalEquipment - generalReviewedMonth, 0)
+            },
+            areas: areaRows.map((row) => ({
+                area: row.area || 'Sin área',
+                totalEquipment: Number(row.total_equipment || 0),
+                criticalEquipment: Number(row.critical_equipment || 0),
+                generalEquipment: Number(row.general_equipment || 0),
+                criticalReviewedToday: Number(row.critical_reviewed_today || 0),
+                generalReviewedMonth: Number(row.general_reviewed_month || 0),
+                openReports: Number(row.open_reports || 0)
+            })),
+            pending: {
+                criticalToday: pendingCriticalRows,
+                generalMonth: pendingGeneralRows
+            }
+        });
+    } catch (err) {
+        res.status(500).json({ message: 'Error al consultar el resumen del dashboard' });
+    }
+});
+
 app.get('/api/reports', async (req, res) => {
     try {
         const requester = await requirePermission(req, res, 'reports:read');
@@ -796,10 +959,7 @@ app.get('/api/reports', async (req, res) => {
                 OR (${overloadedCondition})
             )
         `;
-        const filters = [
-            `COALESCE(inspection_details.finding_closed, 0) = 0`,
-            findingsCondition
-        ];
+        const filters = [];
         const params = [];
 
         if (req.query.area) {

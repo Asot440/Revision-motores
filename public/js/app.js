@@ -1,4 +1,4 @@
-const API = {
+﻿const API = {
     getUserId() {
         const user = getCurrentUser();
         return user?.id;
@@ -24,7 +24,7 @@ const API = {
         const result = await response.json();
 
         if (!response.ok) {
-            throw new Error(result.message || 'Error en la petición');
+            throw new Error(result.message || 'Error en la peticiÃƒÆ’Ã‚Â³n');
         }
 
         return result;
@@ -72,14 +72,14 @@ function getCurrentUser() {
 
 let printTemplate = {
     companyName: 'EMPAQUES MODERNOS SAN PABLO S. DE R.L. DE C.V.',
-    criticalTitle: 'REVISIÓN DE EQUIPO ELÉCTRICO CRÍTICO',
-    generalTitle: 'REVISIÓN DE EQUIPO ELÉCTRICO GENERAL',
+    criticalTitle: 'REVISIÃ“N DE EQUIPO ELÃ‰CTRICO CRÃTICO',
+    generalTitle: 'REVISIÃ“N DE EQUIPO ELÃ‰CTRICO GENERAL',
     logoSrc: 'img/print-logo.jpg',
     footer: {
         code: 'F-01-MIF-S-42',
-        version: 'Versión: 0',
-        edition: 'Edición: 1',
-        page: 'Página 1'
+        version: 'VersiÃƒÆ’Ã‚Â³n: 0',
+        edition: 'EdiciÃƒÆ’Ã‚Â³n: 1',
+        page: 'PÃƒÆ’Ã‚Â¡gina 1'
     }
 };
 
@@ -142,7 +142,7 @@ function initLogin() {
                 window.location.href = '/dashboard.html';
             }, 700);
         } catch (error) {
-            showAlert(error.message || 'Usuario o contraseña incorrectos', 'error');
+            showAlert(error.message || 'Usuario o contraseÃƒÆ’Ã‚Â±a incorrectos', 'error');
         }
     });
 }
@@ -205,6 +205,7 @@ function initDashboard() {
 
     initEquipmentDatabase(user);
     initUserManagement(user);
+    loadHomeDashboard();
     loadFollowUpReports();
     loadReports();
     initReviewQueryDates();
@@ -237,6 +238,11 @@ function showPage(page) {
     if (page === 'general-query') {
         loadReviewQuery(false);
     }
+
+    if (page === 'home') {
+        loadHomeDashboard();
+        loadFollowUpReports();
+    }
 }
 
 async function loadEquipment() {
@@ -262,7 +268,7 @@ function renderEquipmentOptions(selectId, equipment, critical, area = '') {
         ? available.map((item) => `
             <option value="${item.id}">${escapeHtml(item.equipment_key)} - ${escapeHtml(item.name)}</option>
         `).join('')
-        : '<option value="">Sin equipos para esta área</option>';
+        : '<option value="">Sin equipos para esta Ã¡rea</option>';
 }
 
 function refreshReviewEquipmentOptions() {
@@ -316,7 +322,7 @@ function renderEquipment(equipment) {
                     <td>${escapeHtml(item.name)}</td>
                     <td>${escapeHtml(item.area || '-')}</td>
                     <td>${item.nominal_current ?? '-'} A</td>
-                    <td>${item.critical ? 'Crítico' : 'General'}</td>
+                    <td>${item.critical ? 'CrÃ­tico' : 'General'}</td>
                     <td>${item.active ? 'Activo' : 'Inactivo'}</td>
                     <td>
                         <button class="btn-table-action" type="button" data-edit-equipment="${item.id}">
@@ -336,7 +342,7 @@ function renderEquipment(equipment) {
     if (areaFilter) {
         const areas = [...new Set(equipment.map((item) => item.area).filter(Boolean))].sort();
         areaFilter.innerHTML = `
-            <option value="">Todas las áreas</option>
+            <option value="">Todas las Ã¡reas</option>
             ${areas.map((area) => `
                 <option value="${escapeHtml(area)}"${area === selectedArea ? ' selected' : ''}>${escapeHtml(area)}</option>
             `).join('')}
@@ -363,7 +369,7 @@ function renderEquipment(equipment) {
                 return;
             }
 
-            const confirmed = window.confirm(`¿Eliminar el equipo ${item.equipment_key} - ${item.name}?`);
+            const confirmed = window.confirm(`Ãƒâ€šÂ¿Eliminar el equipo ${item.equipment_key} - ${item.name}?`);
 
             if (!confirmed) {
                 return;
@@ -384,11 +390,11 @@ function renderReadingsTable(tableBody, readings, emptyMessage) {
     tableBody.innerHTML = readings.length
         ? readings.map((item) => {
             const findings = [
-                item.current === null || item.current === undefined ? 'Pendiente subestación' : '',
-                !item.equipment_stopped && (item.temperature === null || item.temperature === undefined) ? 'Pendiente revisión física' : '',
+                item.current === null || item.current === undefined ? 'Pendiente subestaciÃƒÆ’Ã‚Â³n' : '',
+                !item.equipment_stopped && (item.temperature === null || item.temperature === undefined) ? 'Pendiente revisiÃ³n fÃƒÆ’Ã‚Â­sica' : '',
                 item.equipment_stopped ? 'Equipo parado' : '',
                 item.overloaded ? 'Sobrecargado' : '',
-                item.vibration ? 'Vibración' : '',
+                item.vibration ? 'VibraciÃ³n' : '',
                 item.noise ? 'Ruido' : '',
                 item.cleaning_required ? 'Limpieza' : ''
             ].filter(Boolean).join(', ') || '-';
@@ -396,7 +402,7 @@ function renderReadingsTable(tableBody, readings, emptyMessage) {
                 ? '-'
                 : item.temperature === null || item.temperature === undefined
                     ? 'Pendiente'
-                    : `${escapeHtml(item.temperature)} °C`;
+                    : `${escapeHtml(item.temperature)} Ãƒâ€šÂ°C`;
             const current = item.current === null || item.current === undefined
                 ? 'Pendiente'
                 : `${escapeHtml(item.current)} A`;
@@ -430,7 +436,7 @@ async function loadReadings(critical) {
         renderReadingsTable(
             tableBody,
             readings,
-            critical ? 'Sin registros críticos' : 'Sin registros generales'
+            critical ? 'Sin registros crÃƒÂ­ticos' : 'Sin registros generales'
         );
     } catch (error) {
         tableBody.innerHTML = '<tr><td class="empty-row" colspan="7">No tienes permiso para ver registros</td></tr>';
@@ -448,11 +454,11 @@ function renderReviewQueryTable(tableBody, readings, emptyMessage) {
     tableBody.innerHTML = readings.length
         ? readings.map((item) => {
             const findings = [
-                item.current === null || item.current === undefined ? 'Pendiente subestación' : '',
-                !item.equipment_stopped && (item.temperature === null || item.temperature === undefined) ? 'Pendiente revisión física' : '',
+                item.current === null || item.current === undefined ? 'Pendiente subestaciÃƒÆ’Ã‚Â³n' : '',
+                !item.equipment_stopped && (item.temperature === null || item.temperature === undefined) ? 'Pendiente revisiÃ³n fÃƒÆ’Ã‚Â­sica' : '',
                 item.equipment_stopped ? 'Equipo parado' : '',
                 item.overloaded ? 'Sobrecargado' : '',
-                item.vibration ? 'Vibración' : '',
+                item.vibration ? 'VibraciÃ³n' : '',
                 item.noise ? 'Ruido' : '',
                 item.cleaning_required ? 'Limpieza' : ''
             ].filter(Boolean).join(', ') || '-';
@@ -512,10 +518,10 @@ async function loadReviewQuery(critical) {
         renderReviewQueryTable(
             tableBody,
             readings,
-            critical ? 'Sin revisión crítica para este día' : 'Sin revisión general para este día'
+            critical ? 'Sin revisiÃ³n crÃƒÆ’Ã‚Â­tica para este dÃƒÆ’Ã‚Â­a' : 'Sin revisiÃ³n general para este dÃƒÆ’Ã‚Â­a'
         );
     } catch (error) {
-        tableBody.innerHTML = '<tr><td class="empty-row" colspan="9">No se pudo cargar la revisión</td></tr>';
+        tableBody.innerHTML = '<tr><td class="empty-row" colspan="9">No se pudo cargar la revisiÃ³n</td></tr>';
     }
 }
 
@@ -546,7 +552,7 @@ function formatRelativeDate(dateValue) {
         return 'Ayer';
     }
 
-    return `Hace ${diffDays} días`;
+    return `Hace ${diffDays} dÃƒÆ’Ã‚Â­as`;
 }
 
 function formatRecordDate(dateValue) {
@@ -559,6 +565,496 @@ function formatRecordDate(dateValue) {
     return date.toLocaleDateString();
 }
 
+function hasReportFinding(item) {
+    return Boolean(
+        item.vibration
+        || item.noise
+        || item.overloaded
+        || item.cleaning_required
+        || String(item.comments || '').trim()
+    );
+}
+
+function formatDashboardTimestamp(date = new Date()) {
+    return date.toLocaleString('es-MX', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function setHomeStatValue(id, value, detail = '') {
+    const valueElement = document.getElementById(id);
+    const detailElement = document.getElementById(`${id}Detail`);
+
+    if (valueElement) {
+        valueElement.textContent = value;
+    }
+
+    if (detailElement) {
+        detailElement.textContent = detail;
+    }
+}
+
+function setHomeStatCard(id, label, helper = '') {
+    const valueElement = document.getElementById(id);
+    const card = valueElement?.closest('.stat-card');
+    const labelElement = card?.querySelector('.stat-label');
+    const helperElement = document.getElementById(`${id}Detail`) || card?.querySelector('.stat-helper');
+
+    if (labelElement) {
+        labelElement.textContent = label;
+    }
+
+    if (helperElement && helper) {
+        helperElement.textContent = helper;
+    }
+}
+
+function setupHomeDashboardLayout() {
+    const homeLayout = document.querySelector('#home-page .home-layout');
+
+    if (!homeLayout || homeLayout.dataset.dashboardEnhanced === '1') {
+        return;
+    }
+
+    homeLayout.innerHTML = `
+        <section class="home-main">
+            <div class="home-insights-grid">
+                <article class="reports-panel">
+                    <div class="reports-header">
+                        <div>
+                            <h2>Cobertura de inspecciÃ³n</h2>
+                            <p>Avance del dÃ­a por criticidad y total de equipos revisados.</p>
+                        </div>
+                    </div>
+                    <div class="home-coverage-chart" id="homeCoverageChart"></div>
+                </article>
+
+                <article class="reports-panel">
+                    <div class="reports-header">
+                        <div>
+                            <h2>Carga por Ã¡rea</h2>
+                            <p>Comparativo simple de equipos y reportes abiertos por Ã¡rea.</p>
+                        </div>
+                    </div>
+                    <div class="home-bar-chart" id="homeAreaChart"></div>
+                </article>
+            </div>
+
+            <article class="reports-panel">
+                <div class="reports-header">
+                    <div>
+                        <h2>Control de periodicidad</h2>
+                        <p>Seguimiento operativo segÃºn la frecuencia real de inspecciÃ³n.</p>
+                    </div>
+                </div>
+                <div class="home-cycle-grid" id="homeCycleSummary"></div>
+            </article>
+
+            <div class="home-insights-grid">
+                <article class="reports-panel">
+                    <div class="reports-header">
+                        <div>
+                            <h2>Hallazgos frecuentes</h2>
+                            <p>Comportamiento acumulado de las inspecciones registradas.</p>
+                        </div>
+                    </div>
+                    <div class="home-finding-list" id="homeFindingSummary"></div>
+                </article>
+
+                <article class="reports-panel">
+                    <div class="reports-header">
+                        <div>
+                            <h2>Resumen por Ã¡rea</h2>
+                            <p>Equipos, crÃ­ticos, revisiÃ³n de hoy y reportes abiertos.</p>
+                        </div>
+                    </div>
+                    <div class="home-summary-list" id="homeAreaSummary"></div>
+                </article>
+            </div>
+        </section>
+
+        <section class="home-reports">
+            <div class="reports-panel">
+                <div class="reports-header">
+                    <div>
+                        <h2>Cola de atenciÃ³n</h2>
+                        <p>Hallazgos abiertos que requieren mantenimiento o seguimiento.</p>
+                    </div>
+                    <div class="home-action-badges">
+                        <span class="report-flag report-flag-overload">Sobrecarga</span>
+                        <span class="report-flag report-flag-vibration">VibraciÃ³n</span>
+                        <span class="report-flag report-flag-comment">Seguimiento</span>
+                    </div>
+                </div>
+
+                <div class="report-list" id="homePriorityList"></div>
+            </div>
+        </section>
+    `;
+
+    homeLayout.dataset.dashboardEnhanced = '1';
+}
+
+function renderHomeAreaSummary(areaSummary) {
+    const container = document.getElementById('homeAreaSummary');
+
+    if (!container) {
+        return;
+    }
+
+    if (!areaSummary.length) {
+        container.innerHTML = '<div class="home-empty-state">No hay Ã¡reas con informaciÃ³n disponible.</div>';
+        return;
+    }
+
+    container.innerHTML = areaSummary.map((item) => `
+        <article class="home-summary-card">
+            <div>
+                <strong>${escapeHtml(item.area)}</strong>
+                <span>${item.openReports} reportes abiertos</span>
+            </div>
+            <div class="home-summary-metrics">
+                <span>Equipos: ${item.totalEquipment}</span>
+                <span>CrÃ­ticos: ${item.criticalEquipment}</span>
+                <span>CrÃ­ticos hoy: ${item.criticalReviewedToday}/${item.criticalEquipment}</span>
+                <span>Generales mes: ${item.generalReviewedMonth}/${item.generalEquipment}</span>
+            </div>
+        </article>
+    `).join('');
+}
+
+function renderHomeFindingSummary(findingSummary) {
+    const container = document.getElementById('homeFindingSummary');
+
+    if (!container) {
+        return;
+    }
+
+    if (!findingSummary.length) {
+        container.innerHTML = '<div class="home-empty-state">AÃºn no hay hallazgos registrados.</div>';
+        return;
+    }
+
+    container.innerHTML = findingSummary.map((item) => `
+        <article class="home-finding-item">
+            <div>
+                <strong>${escapeHtml(item.label)}</strong>
+                <span>${escapeHtml(item.caption)}</span>
+            </div>
+            <strong class="home-finding-value">${item.count}</strong>
+        </article>
+    `).join('');
+}
+
+function renderHomeCycleSummary(summary) {
+    const container = document.getElementById('homeCycleSummary');
+
+    if (!container) {
+        return;
+    }
+
+    const criticalItems = (summary?.pending?.criticalToday || [])
+        .map((item) => `<li>${escapeHtml(item.equipment_key)} - ${escapeHtml(item.equipment_name)} <span>${escapeHtml(item.area || '-')}</span></li>`)
+        .join('');
+    const generalItems = (summary?.pending?.generalMonth || [])
+        .map((item) => `<li>${escapeHtml(item.equipment_key)} - ${escapeHtml(item.equipment_name)} <span>${escapeHtml(item.area || '-')}</span></li>`)
+        .join('');
+
+    container.innerHTML = `
+        <article class="home-cycle-card">
+            <div class="home-cycle-header">
+                <strong>CrÃ­ticos de hoy</strong>
+                <span>${summary.coverage.criticalPendingToday} pendientes</span>
+            </div>
+            <p>La revisiÃ³n crÃ­tica debe completarse diariamente.</p>
+            <ul class="home-cycle-list">
+                ${criticalItems || '<li>Sin pendientes crÃ­ticos hoy.</li>'}
+            </ul>
+        </article>
+        <article class="home-cycle-card">
+            <div class="home-cycle-header">
+                <strong>Generales del mes</strong>
+                <span>${summary.coverage.generalPendingMonth} pendientes</span>
+            </div>
+            <p>La revisiÃ³n general debe completarse una vez por mes.</p>
+            <ul class="home-cycle-list">
+                ${generalItems || '<li>Sin pendientes generales este mes.</li>'}
+            </ul>
+        </article>
+    `;
+}
+
+function renderHomeCoverageChart(items) {
+    const container = document.getElementById('homeCoverageChart');
+
+    if (!container) {
+        return;
+    }
+
+    if (!items.length) {
+        container.innerHTML = '<div class="home-empty-state">No hay equipos para calcular cobertura.</div>';
+        return;
+    }
+
+    container.innerHTML = items.map((item) => `
+        <article class="home-chart-row">
+            <div class="home-chart-labels">
+                <strong>${escapeHtml(item.label)}</strong>
+                <span>${item.reviewed}/${item.total} revisados</span>
+            </div>
+            <div class="home-progress-track">
+                <span class="home-progress-fill ${escapeHtml(item.variant)}" style="width: ${item.percentage}%;"></span>
+            </div>
+            <strong class="home-chart-value">${item.percentage}%</strong>
+        </article>
+    `).join('');
+}
+
+function renderHomeAreaChart(items) {
+    const container = document.getElementById('homeAreaChart');
+
+    if (!container) {
+        return;
+    }
+
+    if (!items.length) {
+        container.innerHTML = '<div class="home-empty-state">No hay datos por Ã¡rea para mostrar.</div>';
+        return;
+    }
+
+    const maxEquipment = Math.max(...items.map((item) => item.totalEquipment), 1);
+    const maxReports = Math.max(...items.map((item) => item.openReports), 1);
+
+    container.innerHTML = items.map((item) => `
+        <article class="home-area-bar-card">
+            <div class="home-chart-labels">
+                <strong>${escapeHtml(item.area)}</strong>
+                <span>${item.totalEquipment} equipos Â· ${item.openReports} abiertos</span>
+            </div>
+            <div class="home-bar-stack">
+                <div class="home-bar-line">
+                    <span class="home-bar-caption">Equipos</span>
+                    <div class="home-progress-track">
+                        <span class="home-progress-fill home-progress-fill-neutral" style="width: ${(item.totalEquipment / maxEquipment) * 100}%;"></span>
+                    </div>
+                </div>
+                <div class="home-bar-line">
+                    <span class="home-bar-caption">Abiertos</span>
+                    <div class="home-progress-track">
+                        <span class="home-progress-fill home-progress-fill-alert" style="width: ${maxReports ? (item.openReports / maxReports) * 100 : 0}%;"></span>
+                    </div>
+                </div>
+            </div>
+        </article>
+    `).join('');
+}
+
+function renderHomePriorityList(reports) {
+    const container = document.getElementById('homePriorityList');
+
+    if (!container) {
+        return;
+    }
+
+    if (!reports.length) {
+        container.innerHTML = `
+            <article class="report-card">
+                <p class="report-desc">No hay prioridades abiertas en este momento.</p>
+            </article>
+        `;
+        return;
+    }
+
+    container.innerHTML = reports.map((item) => {
+        const findings = getReportFindings(item, true);
+        const findingsHtml = findings.length
+            ? findings.map((finding) => `<span class="report-flag ${finding.className}">${escapeHtml(finding.label)}</span>`).join('')
+            : '<span class="muted-text">Sin hallazgos clasificados</span>';
+
+        return `
+            <article class="report-card home-priority-card">
+                <div class="report-card-top">
+                    <div>
+                        <span class="report-title">${escapeHtml(item.equipment_key)} - ${escapeHtml(item.equipment_name)}</span>
+                        <span class="report-area-label">${item.critical ? 'CrÃ­tico' : 'General'} Â· Ãrea: ${escapeHtml(item.area || '-')}</span>
+                    </div>
+                    <span class="report-days">${escapeHtml(formatRelativeDate(item.date))}</span>
+                </div>
+                <div class="report-flags">
+                    ${findingsHtml}
+                </div>
+                <p class="report-desc">${escapeHtml(String(item.comments || '').trim() || 'Sin comentarios registrados.')}</p>
+                ${item.finding_closed ? '' : `<button class="btn-table-action report-action-btn" type="button" data-close-report="${item.id}">Atender</button>`}
+            </article>
+        `;
+    }).join('');
+
+    container.querySelectorAll('[data-close-report]').forEach((button) => {
+        button.addEventListener('click', () => saveReportAction(button.dataset.closeReport));
+    });
+}
+
+async function loadHomeDashboard() {
+    if (!document.getElementById('home-page')) {
+        return;
+    }
+
+    setupHomeDashboardLayout();
+
+    try {
+        const [summary, reports] = await Promise.all([
+            API.get('/api/dashboard-summary'),
+            API.get('/api/reports')
+        ]);
+
+        const openReports = reports.filter((item) => !item.finding_closed && hasReportFinding(item));
+
+        const findingSummary = [
+            {
+                label: 'Sobrecarga',
+                caption: 'Registros por arriba de la corriente nominal',
+                count: reports.filter((item) => item.overloaded).length
+            },
+            {
+                label: 'VibraciÃ³n',
+                caption: 'Inspecciones con vibraciÃƒÂ³n detectada',
+                count: reports.filter((item) => item.vibration).length
+            },
+            {
+                label: 'Ruido',
+                caption: 'Inspecciones con ruido anormal',
+                count: reports.filter((item) => item.noise).length
+            },
+            {
+                label: 'Limpieza',
+                caption: 'Equipos que requieren limpieza',
+                count: reports.filter((item) => item.cleaning_required).length
+            },
+            {
+                label: 'Comentarios',
+                caption: 'Revisiones con observaciones registradas',
+                count: reports.filter((item) => String(item.comments || '').trim()).length
+            }
+        ].filter((item) => item.count > 0);
+
+        const priorityReports = [...openReports]
+            .sort((left, right) => {
+                const leftScore = (left.critical ? 4 : 0) + (left.overloaded ? 3 : 0) + (left.vibration ? 2 : 0) + (left.noise ? 2 : 0);
+                const rightScore = (right.critical ? 4 : 0) + (right.overloaded ? 3 : 0) + (right.vibration ? 2 : 0) + (right.noise ? 2 : 0);
+
+                if (rightScore !== leftScore) {
+                    return rightScore - leftScore;
+                }
+
+                return new Date(right.date) - new Date(left.date);
+            })
+            .slice(0, 5);
+
+        const areaSummary = [...summary.areas]
+            .sort((left, right) => {
+                if (right.openReports !== left.openReports) {
+                    return right.openReports - left.openReports;
+                }
+
+                return right.totalEquipment - left.totalEquipment;
+            });
+
+        const coverageSummary = [
+            {
+                label: 'Críticos hoy',
+                reviewed: summary.coverage.criticalReviewedToday,
+                total: summary.totals.criticalEquipment,
+                percentage: summary.totals.criticalEquipment ? Math.round((summary.coverage.criticalReviewedToday / summary.totals.criticalEquipment) * 100) : 0,
+                variant: 'home-progress-fill-critical'
+            },
+            {
+                label: 'Generales del mes',
+                reviewed: summary.coverage.generalReviewedMonth,
+                total: summary.totals.generalEquipment,
+                percentage: summary.totals.generalEquipment ? Math.round((summary.coverage.generalReviewedMonth / summary.totals.generalEquipment) * 100) : 0,
+                variant: 'home-progress-fill-neutral'
+            },
+            {
+                label: 'Cobertura total',
+                reviewed: summary.coverage.criticalReviewedToday + summary.coverage.generalReviewedMonth,
+                total: summary.totals.activeEquipment,
+                percentage: summary.totals.activeEquipment ? Math.round(((summary.coverage.criticalReviewedToday + summary.coverage.generalReviewedMonth) / summary.totals.activeEquipment) * 100) : 0,
+                variant: 'home-progress-fill-primary'
+            }
+        ];
+
+        const updatedAt = document.getElementById('homeDashboardUpdatedAt');
+
+        if (updatedAt) {
+            updatedAt.textContent = formatDashboardTimestamp();
+        }
+
+        const statEquipment = document.getElementById('homeStatEquipment');
+        const statCritical = document.getElementById('homeStatCritical');
+        const statClosedReports = document.getElementById('homeStatClosedReports');
+        const statOverloaded = document.getElementById('homeStatOverloaded');
+
+        if (statEquipment) {
+            statEquipment.textContent = summary.totals.activeEquipment;
+        }
+
+        if (statCritical) {
+            statCritical.textContent = summary.totals.criticalEquipment;
+        }
+
+        if (statClosedReports) {
+            statClosedReports.textContent = summary.coverage.criticalPendingToday;
+        }
+
+        if (statOverloaded) {
+            statOverloaded.textContent = summary.coverage.generalPendingMonth;
+        }
+
+        setHomeStatValue(
+            'homeStatReviewedToday',
+            summary.coverage.criticalReviewedToday,
+            `${summary.coverage.criticalPendingToday} críticos pendientes hoy`
+        );
+        setHomeStatValue(
+            'homeStatOpenReports',
+            summary.coverage.generalReviewedMonth,
+            `${summary.coverage.generalPendingMonth} generales pendientes del mes`
+        );
+        setHomeStatCard('homeStatEquipment', 'Equipos activos', 'Base total para inspección');
+        setHomeStatCard('homeStatCritical', 'Equipos críticos', 'Requieren revisión diaria');
+        setHomeStatCard('homeStatReviewedToday', 'Críticos revisados hoy');
+        setHomeStatCard('homeStatOpenReports', 'Generales revisados este mes');
+        setHomeStatCard('homeStatClosedReports', 'Críticos pendientes hoy', `${summary.coverage.criticalPendingToday} faltan por revisar`);
+        setHomeStatCard('homeStatOverloaded', 'Generales pendientes del mes', `${summary.coverage.generalPendingMonth} faltan por revisar`);
+
+        renderHomeAreaSummary(areaSummary);
+        renderHomeFindingSummary(findingSummary);
+        renderHomeCoverageChart(coverageSummary);
+        renderHomeAreaChart(areaSummary);
+        renderHomeCycleSummary(summary);
+        renderHomePriorityList(priorityReports);
+    } catch (error) {
+        const updatedAt = document.getElementById('homeDashboardUpdatedAt');
+
+        if (updatedAt) {
+            updatedAt.textContent = 'No se pudo actualizar';
+        }
+
+        renderHomeAreaSummary([]);
+        renderHomeFindingSummary([]);
+        renderHomeCoverageChart([]);
+        renderHomeAreaChart([]);
+        const cycleSummary = document.getElementById('homeCycleSummary');
+        if (cycleSummary) {
+            cycleSummary.innerHTML = '<div class="home-empty-state">No se pudo cargar el control de periodicidad.</div>';
+        }
+        renderHomePriorityList([]);
+    }
+}
 function formatInputDate(date = new Date()) {
     const offsetMs = date.getTimezoneOffset() * 60000;
     return new Date(date.getTime() - offsetMs).toISOString().slice(0, 10);
@@ -592,7 +1088,19 @@ async function loadPrintTemplate() {
 
 function getPrintReviewDate(type) {
     const input = document.getElementById(type === 'critical' ? 'criticalQueryDate' : 'generalQueryDate');
-    return input?.value || formatInputDate();
+    const rawDate = input?.value || formatInputDate();
+    const [year, month, day] = rawDate.split('-');
+
+    if (year && month && day) {
+        return `${day}/${month}/${year}`;
+    }
+
+    return rawDate;
+}
+
+function getPrintReviewArea(type) {
+    const input = document.getElementById(type === 'critical' ? 'criticalQueryArea' : 'generalQueryArea');
+    return input?.value || 'Todas';
 }
 
 function renderPrintTemplate() {
@@ -610,7 +1118,8 @@ function renderPrintTemplate() {
                     ${escapeHtml(printTemplate.companyName)}
                 </div>
                 <div class="print-title-cell">
-                    ${escapeHtml(title || printTemplate.defaultTitle || '')}
+                    <span class="print-title-text">${escapeHtml(title || printTemplate.defaultTitle || '')}</span>
+                    <span class="print-area-text">Ãrea: ${escapeHtml(getPrintReviewArea(type))}</span>
                 </div>
                 <div class="print-meta-cell">
                     <span>FECHA:</span>
@@ -621,7 +1130,6 @@ function renderPrintTemplate() {
 
         if (footer) {
             footer.innerHTML = `
-                <span>${escapeHtml(printTemplate.footer?.page || '')}</span>
                 <span>${escapeHtml(printTemplate.footer?.version || '')}</span>
                 <span>${escapeHtml(printTemplate.footer?.edition || '')}</span>
                 <strong>${escapeHtml(printTemplate.footer?.code || '')}</strong>
@@ -633,7 +1141,7 @@ function renderPrintTemplate() {
 function getReportFindings(item, includeStopped = false) {
     return [
         includeStopped && item.equipment_stopped ? { label: 'Equipo parado', className: 'report-flag-stopped' } : null,
-        item.vibration ? { label: 'Vibración', className: 'report-flag-vibration' } : null,
+        item.vibration ? { label: 'VibraciÃ³n', className: 'report-flag-vibration' } : null,
         item.noise ? { label: 'Ruido', className: 'report-flag-noise' } : null,
         item.overloaded ? { label: 'Sobrecargado', className: 'report-flag-overload' } : null,
         item.cleaning_required ? { label: 'Limpieza', className: 'report-flag-dirt' } : null,
@@ -647,7 +1155,7 @@ function hasClosableFinding(item) {
 
 async function saveReportAction(reportId, currentAction = '') {
     const actionTaken = window.prompt(
-        'Describe la acción realizada para atender el hallazgo:',
+        'Describe la acciÃƒÂ³n realizada para atender el hallazgo:',
         currentAction
     );
 
@@ -656,7 +1164,7 @@ async function saveReportAction(reportId, currentAction = '') {
     }
 
     if (!actionTaken.trim()) {
-        showAlert('La acción realizada es obligatoria', 'error');
+        showAlert('La acciÃƒÂ³n realizada es obligatoria', 'error');
         return;
     }
 
@@ -666,9 +1174,9 @@ async function saveReportAction(reportId, currentAction = '') {
         });
         await loadFollowUpReports();
         await loadReports();
-        showAlert('Acción guardada', 'success');
+        showAlert('AcciÃƒÆ’Ã‚Â³n guardada', 'success');
     } catch (error) {
-        showAlert(error.message || 'No se pudo guardar la acción', 'error');
+        showAlert(error.message || 'No se pudo guardar la acciÃƒÆ’Ã‚Â³n', 'error');
     }
 }
 
@@ -726,7 +1234,7 @@ function renderReportsTable(reports) {
             `
             : hasClosableFinding(item)
                 ? `<button class="btn-table-action" type="button" data-close-report="${item.id}">Atender</button>`
-                : '<span class="muted-text">Sin acción pendiente</span>';
+                : '<span class="muted-text">Sin acciÃƒÆ’Ã‚Â³n pendiente</span>';
 
         return `
             <tr>
@@ -795,14 +1303,14 @@ function renderFollowUpReports(reports) {
                 <div class="report-card-top">
                     <div>
                         <span class="report-title">${escapeHtml(item.equipment_key)} - ${escapeHtml(item.equipment_name)}</span>
-                        <span class="report-area-label">Área: ${escapeHtml(item.area || '-')}</span>
+                        <span class="report-area-label">Ãrea: ${escapeHtml(item.area || '-')}</span>
                     </div>
                     <span class="report-days">${escapeHtml(formatRelativeDate(item.date))}</span>
                 </div>
                 <p class="report-desc">
                     ${item.equipment_stopped
                         ? 'Equipo parado, sin valores registrados'
-                        : `Temperatura: ${escapeHtml(item.temperature)} °C · Corriente: ${escapeHtml(item.current)} A${item.nominal_current ? ` · Nominal: ${escapeHtml(item.nominal_current)} A` : ''}`}
+                        : `Temperatura: ${escapeHtml(item.temperature)} Ãƒâ€šÂ°C Â· Corriente: ${escapeHtml(item.current)} A${item.nominal_current ? ` Â· Nominal: ${escapeHtml(item.nominal_current)} A` : ''}`}
                     ${comments ? `<br>Comentarios: ${escapeHtml(comments)}` : ''}
                 </p>
                 <div class="report-flags">
@@ -889,7 +1397,7 @@ function resetUserForm() {
     document.getElementById('userId').value = '';
     document.getElementById('userRole').value = 'viewer';
     document.getElementById('userPassword').required = true;
-    document.getElementById('userPassword').placeholder = 'Contraseña';
+    document.getElementById('userPassword').placeholder = 'ContraseÃ±a';
     document.getElementById('userSubmitBtn').textContent = 'Guardar usuario';
     document.getElementById('userCancelBtn').style.display = 'none';
     setSelectedUserPermissions(ROLE_PERMISSIONS.viewer);
@@ -900,7 +1408,7 @@ function setUserFormMode(user) {
     document.getElementById('userUsername').value = user.username || '';
     document.getElementById('userPassword').value = '';
     document.getElementById('userPassword').required = false;
-    document.getElementById('userPassword').placeholder = 'Nueva contraseña (opcional)';
+    document.getElementById('userPassword').placeholder = 'Nueva contraseÃƒÆ’Ã‚Â±a (opcional)';
     document.getElementById('userRole').value = user.role || 'viewer';
     document.getElementById('userSubmitBtn').textContent = 'Actualizar usuario';
     document.getElementById('userCancelBtn').style.display = 'inline-block';
@@ -1149,7 +1657,7 @@ function setupReadingForm(config) {
             const equipmentId = document.getElementById(config.equipmentId).value;
 
             if (!equipmentId) {
-                showAlert('Selecciona un equipo del área indicada', 'error');
+                showAlert('Selecciona un equipo del Ã¡rea indicada', 'error');
                 return;
             }
 
@@ -1175,9 +1683,9 @@ function setupReadingForm(config) {
             await loadReviewQuery(true);
             await loadReviewQuery(false);
             showPage(config.page);
-            showAlert('Revisión física guardada', 'success');
+            showAlert('RevisiÃƒÆ’Ã‚Â³n fÃƒÆ’Ã‚Â­sica guardada', 'success');
         } catch (error) {
-            showAlert(error.message || 'Error al guardar revisión física', 'error');
+            showAlert(error.message || 'Error al guardar revisiÃ³n fÃƒÆ’Ã‚Â­sica', 'error');
         }
     });
 }
@@ -1195,7 +1703,7 @@ function setupCurrentForm(config) {
         const equipmentId = document.getElementById(config.equipmentId).value;
 
         if (!equipmentId) {
-            showAlert('Selecciona un equipo del área indicada', 'error');
+            showAlert('Selecciona un equipo del Ã¡rea indicada', 'error');
             return;
         }
 
